@@ -311,6 +311,12 @@
 
             document.getElementById('clock-time').textContent = `${hours}:${minutes}`;
 
+          // Blank out and remove seconds display entirely
+            const secondsEl = document.getElementById('clock-seconds');
+            if (secondsEl) {
+                secondsEl.textContent = '';
+                secondsEl.style.display = 'none';
+
             if (CONFIG_TIME_FORMAT === 12) {
                 document.getElementById('clock-ampm').textContent = ampm;
                 document.getElementById('clock-ampm').style.display = 'block';
