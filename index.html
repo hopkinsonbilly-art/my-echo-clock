@@ -10,16 +10,18 @@
       margin: 0;
       padding: 0;
     }
-    body {
+    html, body {
       background-color: #000000;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      height: 100vh;
+      /* 101vh creates just enough scroll space for Silk to retract the top bar */
+      min-height: 101vh; 
+      width: 100vw;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      overflow-x: hidden;
     }
     .clock {
       font-size: 11vw;
@@ -69,8 +71,6 @@
     // --- Clock & Date ---
     function updateClock() {
       const now = new Date();
-      
-      // 24-hour time format (use 'en-US' and hour12: true if 12-hour is preferred)
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       document.getElementById('clock').textContent = `${hours}:${minutes}`;
@@ -82,9 +82,8 @@
     updateClock();
 
     // --- Weather (Open-Meteo API) ---
-    // Change latitude & longitude to your UK town/city (Default: London)
-    const LAT = 54.9042; 
-    const LON = -0.13809;
+    const LAT = 51.5074; 
+    const LON = -0.1278;
 
     const weatherCodes = {
       0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -108,12 +107,24 @@
       }
     }
     fetchWeather();
-    setInterval(fetchWeather, 900000); // Refresh weather every 15 minutes
+    setInterval(fetchWeather, 900000);
 
-    // --- Silent Audio Autoplay Trigger ---
-    const audio = document.getElementById('silent-audio');
+    // --- Tap Event: Request Fullscreen & Start Silent Audio ---
     document.body.addEventListener('click', () => {
+      // Start audio
+      const audio = document.getElementById('silent-audio');
       audio.play().catch(() => {});
+
+      // Request browser fullscreen mode
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen().catch(() => {});
+      }
+
+      // Scroll down slightly to trigger Silk address bar autohide
+      window.scrollTo(0, 10);
     }, { once: true });
   </script>
 </body>
