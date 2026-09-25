@@ -2,7 +2,7 @@
 <!--
 ================================================================================
   Amazon Echo Show Clock and Weather Display
-  By Mechanical Whispers, v0.6.1 (UK Postcode Patch - Clean No-Seconds Version)
+  By Mechanical Whispers, v0.6.1 (UK Postcode Patch - No Radar Variant)
 ================================================================================
 -->
 <html lang="en" class="h-full bg-[#08090d] text-white overflow-hidden">
@@ -165,15 +165,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="h-9 w-[1px] bg-white/20 hidden sm:block"></div>
-
-                <button onclick="openLiveRadar()" class="flex flex-col items-center justify-center px-2.5 py-1 rounded-lg hover:bg-white/10 active:scale-95 transition-all text-slate-200 hover:text-white cursor-pointer" title="Open Live Radar Map">
-                    <div class="text-xs sm:text-base uppercase tracking-wider font-bold text-slate-200 leading-tight">LIVE RADAR</div>
-                    <div class="text-lg sm:text-2xl mt-0.5">📡</div>
-                </button>
-
-                <div class="h-9 w-[1px] bg-white/20 hidden sm:block"></div>
 
                 <div class="flex items-center gap-4 sm:gap-6">
                     <div class="text-center sm:text-left">
@@ -540,11 +531,6 @@
                     rainContainer.classList.add('hidden');
                 }
             }
-        }
-
-        function openLiveRadar() {
-            const windyUrl = `https://www.windy.com/?radar,${resolvedLatitude},${resolvedLongitude},9`;
-            window.open(windyUrl, '_blank');
         }
 
         function initSilentAudioKeepAlive() {
