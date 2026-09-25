@@ -2,9 +2,7 @@
 <!--
 ================================================================================
   Amazon Echo Show Clock and Weather Display
-  By Mechanical Whispers, v0.6.1 (UK Postcode Patch)
-
-  Updated for UK Postcode Geocoding via postcodes.io & Open-Meteo
+  By Mechanical Whispers, v0.6.1 (UK Postcode Patch - No Seconds Variant)
 ================================================================================
 -->
 <html lang="en" class="h-full bg-[#08090d] text-white overflow-hidden">
@@ -209,7 +207,6 @@
     </div>
 
     <script>
-        // Defaults initialized to Sunderland, UK coordinates & Europe/London timezone
         let resolvedLatitude = 54.9069;
         let resolvedLongitude = -1.3819;
         let resolvedTimeZone = "Europe/London";
@@ -304,18 +301,15 @@
 
             let hours = '';
             let minutes = '';
-            let seconds = '';
             let ampm = '';
 
             parts.forEach(part => {
                 if (part.type === 'hour') hours = part.value;
                 if (part.type === 'minute') minutes = part.value;
-                if (part.type === 'second') seconds = part.value;
                 if (part.type === 'dayPeriod') ampm = part.value.toUpperCase();
             });
 
             document.getElementById('clock-time').textContent = `${hours}:${minutes}`;
-            document.getElementById('clock-seconds').textContent = seconds;
 
             if (CONFIG_TIME_FORMAT === 12) {
                 document.getElementById('clock-ampm').textContent = ampm;
@@ -328,7 +322,6 @@
             document.getElementById('clock-date').textContent = now.toLocaleDateString('en-GB', dateOptions);
         }
 
-        // Modified for UK Postcodes via Postcodes.io API
         async function resolvePostcode() {
             try {
                 const cleanPostcode = CONFIG_POSTCODE.replace(/\s+/g, '').toUpperCase();
