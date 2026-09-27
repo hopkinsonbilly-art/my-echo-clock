@@ -29,7 +29,7 @@
       transition: background-image 1s ease-in-out;
     }
 
-    /* Dark Tint Overlay to Keep Text Crisp */
+    /* Dark Tint Overlay */
     body::before {
       content: '';
       position: absolute;
@@ -38,11 +38,11 @@
       z-index: 1;
     }
 
-    /* Top Left Location Label */
+    /* Header Bar */
     .header-bar {
       width: 100%;
       display: flex;
-      justify-content: flex-start;
+      justify-content: space-between;
       align-items: center;
       z-index: 2;
     }
@@ -63,6 +63,27 @@
       height: 8px;
       background-color: #2ed573;
       border-radius: 50%;
+    }
+
+    /* Top Right Fullscreen Button */
+    .fullscreen-btn {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 1.1vw;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .fullscreen-btn:active {
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* Center Time & Date Container */
@@ -174,12 +195,13 @@
 </head>
 <body>
 
-  <!-- Location Badge Header -->
+  <!-- Location Badge & Full Screen Header -->
   <div class="header-bar">
     <div class="location-badge">
       <div class="green-dot"></div>
       SUNDERLAND
     </div>
+    <button class="fullscreen-btn" id="fs-btn">⤢ Exit / Fullscreen</button>
   </div>
 
   <!-- Main Clock & Date Display -->
@@ -230,13 +252,12 @@
   <audio id="silent-audio" loop playsinline src="https://raw.githubusercontent.com/anron/silence-mp3/master/silence-10sec.mp3"></audio>
 
   <script>
-    // --- Day / Night Image URLs ---
-      const dayBg = "day.jpg"; 
-      const nightBg = "night.jpg";
+    // --- Day / Night Image Filenames ---
+    const dayBg = "day.jpg";
+    const nightBg = "night.jpg";
 
     function updateBackground() {
       const hour = new Date().getHours();
-      // Daytime: 6:00 AM (6) to 7:59 PM (19)
       const isDay = hour >= 6 && hour < 20;
       const targetBg = isDay ? dayBg : nightBg;
       
@@ -326,18 +347,33 @@
       }
     }
     fetchWeather();
-    setInterval(fetchWeather, 900000); // Refresh every 15 minutes
+    setInterval(fetchWeather, 900000);
 
-    // --- Tap Event for Fullscreen & Keep-Alive Audio ---
-    document.body.addEventListener('click', () => {
+    // --- Fullscreen Trigger Function ---
+    function triggerFullscreen() {
       const audio = document.getElementById('silent-audio');
       audio.play().catch(() => {});
 
       const docEl = document.documentElement;
-      if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
-      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
+      }
 
       window.scrollTo(0, 10);
+    }
+
+    // Connect both button tap and screen tap
+    document.getElementById('fs-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerFullscreen();
+    });
+
+    document.body.addEventListener('click', () => {
+      triggerFullscreen();
     }, { once: true });
   </script>
 </body>
