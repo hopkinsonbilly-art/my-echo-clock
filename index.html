@@ -17,15 +17,14 @@
       background-repeat: no-repeat;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh; 
+      height: 100vh; 
       width: 100vw;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
-      overflow: hidden; /* Locks both vertical and horizontal scrolling completely */
+      overflow: hidden;
       padding: 16px 20px;
-      padding: 20px;
       position: relative;
       transition: background-image 1s ease-in-out;
     }
@@ -66,25 +65,27 @@
       border-radius: 50%;
     }
 
-    /* Top Right Fullscreen Button */
+    /* Top Right Lock / Fullscreen Button */
     .fullscreen-btn {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: #ffffff;
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 20px;
-      font-size: 1.1vw;
-      font-weight: 600;
+      font-size: 1.2vw;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      transition: background 0.2s;
     }
 
-    .fullscreen-btn:active {
-      background: rgba(255, 255, 255, 0.3);
+    .fullscreen-btn.active {
+      background: rgba(46, 213, 115, 0.3);
+      border-color: #2ed573;
     }
 
     /* Center Time & Date Container */
@@ -196,22 +197,22 @@
 </head>
 <body>
 
-  <!-- Location Badge & Full Screen Header -->
+  <!-- Header Bar -->
   <div class="header-bar">
     <div class="location-badge">
       <div class="green-dot"></div>
       SUNDERLAND
     </div>
-    <button class="fullscreen-btn" id="fs-btn">⤢ Exit / Fullscreen</button>
+    <button class="fullscreen-btn" id="fs-btn">🔴 TAP TO LOCK DISPLAY</button>
   </div>
 
-  <!-- Main Clock & Date Display -->
+  <!-- Center Container -->
   <div class="center-container">
     <div class="clock" id="clock">--:--</div>
     <div class="date" id="date">Loading date...</div>
   </div>
 
-  <!-- Bottom Detailed Weather Widget -->
+  <!-- Bottom Weather Widget -->
   <div class="weather-bar">
     <div class="weather-left">
       <div class="weather-icon" id="weather-icon">☀️</div>
@@ -249,8 +250,8 @@
     </div>
   </div>
 
-  <!-- Silent Audio Keep-Alive Track -->
-  <audio id="silent-audio" loop playsinline src="https://raw.githubusercontent.com/anron/silence-mp3/master/silence-10sec.mp3"></audio>
+  <!-- Embedded Base64 Silent Audio Stream (guarantees local playback) -->
+  <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
     // --- Day / Night Image Filenames ---
@@ -350,32 +351,35 @@
     fetchWeather();
     setInterval(fetchWeather, 900000);
 
-    // --- Fullscreen Trigger Function ---
-    function triggerFullscreen() {
-      const audio = document.getElementById('silent-audio');
-      audio.play().catch(() => {});
+    // --- Audio Keep-Alive & Fullscreen Controller ---
+    const audio = document.getElementById('silent-audio');
+    const btn = document.getElementById('fs-btn');
 
+    function activateKeepAlive() {
+      // 1. Play embedded silent audio loop
+      audio.play().then(() => {
+        btn.textContent = "🟢 DISPLAY LOCKED (ACTIVE)";
+        btn.classList.add('active');
+      }).catch((err) => {
+        btn.textContent = "⚠️ TAP AGAIN TO LOCK";
+      });
+
+      // 2. Request browser fullscreen mode
       const docEl = document.documentElement;
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
         else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
-      } else {
-        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen().catch(() => {});
       }
-
-      // Disabled scrolling shift to keep screen strictly locked in place
-      // window.scrollTo(0, 10);
     }
 
-    // Connect both button tap and screen tap
-    document.getElementById('fs-btn').addEventListener('click', (e) => {
+    // Tap top-right button or anywhere on screen
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      triggerFullscreen();
+      activateKeepAlive();
     });
 
     document.body.addEventListener('click', () => {
-      triggerFullscreen();
+      activateKeepAlive();
     }, { once: true });
   </script>
 </body>
