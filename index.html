@@ -12,7 +12,6 @@
     }
     html, body {
       background-color: #000000;
-      background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -27,6 +26,16 @@
       overflow-x: hidden;
       padding: 20px;
       position: relative;
+      transition: background-image 1s ease-in-out;
+    }
+
+    /* Dark Tint Overlay to Keep Text Crisp */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1;
     }
 
     /* Top Left Location Label */
@@ -175,8 +184,8 @@
 
   <!-- Main Clock & Date Display -->
   <div class="center-container">
-    <div class="clock" id="clock">19:54</div>
-    <div class="date" id="date">Saturday 26 September</div>
+    <div class="clock" id="clock">--:--</div>
+    <div class="date" id="date">Loading date...</div>
   </div>
 
   <!-- Bottom Detailed Weather Widget -->
@@ -221,6 +230,19 @@
   <audio id="silent-audio" loop playsinline src="https://raw.githubusercontent.com/anron/silence-mp3/master/silence-10sec.mp3"></audio>
 
   <script>
+    // --- Day / Night Image URLs ---
+    const dayBg = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80";
+    const nightBg = "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80";
+
+    function updateBackground() {
+      const hour = new Date().getHours();
+      // Daytime: 6:00 AM (6) to 7:59 PM (19)
+      const isDay = hour >= 6 && hour < 20;
+      const targetBg = isDay ? dayBg : nightBg;
+      
+      document.body.style.backgroundImage = `url('${targetBg}')`;
+    }
+
     // --- Clock & Date ---
     function updateClock() {
       const now = new Date();
@@ -230,6 +252,8 @@
 
       const options = { weekday: 'long', day: 'numeric', month: 'long' };
       document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
+
+      updateBackground();
     }
     setInterval(updateClock, 1000);
     updateClock();
@@ -276,7 +300,7 @@
         const wind = Math.round(data.current_weather.windspeed);
         document.getElementById('wind').textContent = `${wind} km/h`;
 
-        // Humidity (nearest hour index)
+        // Humidity
         const currentHour = new Date().getHours();
         const humidity = data.hourly.relativehumidity_2m[currentHour] || "--";
         document.getElementById('humidity').textContent = `${humidity}%`;
@@ -285,7 +309,7 @@
         const sunriseTime = data.daily.sunrise[0].split("T")[1];
         document.getElementById('sunrise').textContent = sunriseTime;
 
-        // Rain Check (Find next hour with precipitation > 30%)
+        // Rain Check
         const precipProbs = data.hourly.precipitation_probability;
         let rainHourText = "NONE";
         for (let i = currentHour; i < currentHour + 24; i++) {
