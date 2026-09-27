@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Echo Show 6 Music Dashboard</title>
-  <!-- Load HLS.js to play BBC stream format natively -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -71,7 +69,7 @@
       backdrop-filter: blur(8px);
       padding: 10px 24px;
       border-radius: 40px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
@@ -85,29 +83,15 @@
       color: #cccccc;
     }
 
-    /* Audio Control Badge */
-    .radio-status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.15);
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-size: 1.8vw;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      background-color: #ff3b30;
-      border-radius: 50%;
-    }
-
-    .dot.playing {
-      background-color: #34c759;
-      box-shadow: 0 0 8px #34c759;
+    /* Embedded Player Container */
+    .player-frame {
+      width: 320px;
+      height: 140px;
+      border: none;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.4);
+      margin-top: 10px;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -122,14 +106,13 @@
       <div class="weather-desc" id="weather-desc">Loading weather...</div>
     </div>
 
-    <!-- Radio Controls -->
-    <div class="radio-status" id="radio-toggle">
-      <div class="dot" id="radio-dot"></div>
-      <span id="radio-text">Tap screen to Start 6 Music</span>
-    </div>
+    <!-- Embedded BBC 6 Music Web Player -->
+    <iframe 
+      class="player-frame" 
+      src="https://www.bbc.co.uk/sounds/play/live:bbc_6music" 
+      allow="autoplay">
+    </iframe>
   </div>
-
-  <audio id="radio-stream" playsinline></audio>
 
   <script>
     // --- Clock & Date ---
@@ -145,7 +128,7 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // --- Weather (Open-Meteo API - Default: Sunderland/UK coordinates) ---
+    // --- Weather (Open-Meteo API) ---
     const LAT = 54.9069;
     const LON = -1.3819;
 
@@ -173,74 +156,14 @@
     fetchWeather();
     setInterval(fetchWeather, 900000);
 
-<script>
-    // --- BBC Radio 6 Music Direct Stream ---
-    // Using high-reliability BBC direct stream URL
-    const streamUrl = 'https://stream.live.vc.bbcmedia.co.uk/bbc_6music';
-    const audio = document.getElementById('radio-stream');
-    const radioText = document.getElementById('radio-text');
-    const radioDot = document.getElementById('radio-dot');
-    let isPlaying = false;
-
-    audio.src = streamUrl;
-
-    function toggleRadio() {
-      if (!isPlaying) {
-        audio.play().then(() => {
-          isPlaying = true;
-          radioText.textContent = "BBC Radio 6 Music (Playing)";
-          radioDot.classList.add('playing');
-        }).catch(err => {
-          console.error("Playback error:", err);
-          radioText.textContent = "Tap to Retry 6 Music";
-        });
-      } else {
-        audio.pause();
-        isPlaying = false;
-        radioText.textContent = "BBC Radio 6 Music (Paused)";
-        radioDot.classList.remove('playing');
-      }
-    }
-
-    // --- First Tap Trigger ---
+    // --- First Tap Trigger for Fullscreen & Scroll ---
     document.body.addEventListener('click', () => {
-      if (!isPlaying) {
-        toggleRadio();
-      }
-
-      // Request fullscreen mode
       const docEl = document.documentElement;
       if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
       else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
 
       window.scrollTo(0, 10);
     }, { once: true });
-
-    // Allow user to toggle radio on/off anytime by tapping the status bar
-    document.getElementById('radio-toggle').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleRadio();
-    });
-  </script>
-    // --- First Tap Trigger ---
-    document.body.addEventListener('click', () => {
-      if (!isPlaying) {
-        toggleRadio();
-      }
-
-      // Request fullscreen mode
-      const docEl = document.documentElement;
-      if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
-      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
-
-      window.scrollTo(0, 10);
-    }, { once: true });
-
-    // Allow user to toggle radio on/off anytime by tapping the status bar
-    document.getElementById('radio-toggle').addEventListener('click', (e) => {
-      e.stopPropagation(); // prevent triggering body click
-      toggleRadio();
-    });
   </script>
 </body>
 </html>
