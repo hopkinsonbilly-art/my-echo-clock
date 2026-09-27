@@ -173,21 +173,16 @@
     fetchWeather();
     setInterval(fetchWeather, 900000);
 
-    // --- BBC Radio 6 Music HLS Stream ---
-    const streamUrl = 'https://as-hls-ww-live.akamaized.net/pool_904/live/ww/bbc_6music/bbc_6music.isml/bbc_6music-audio=320000.m3u8';
+<script>
+    // --- BBC Radio 6 Music Direct Stream ---
+    // Using high-reliability BBC direct stream URL
+    const streamUrl = 'https://stream.live.vc.bbcmedia.co.uk/bbc_6music';
     const audio = document.getElementById('radio-stream');
     const radioText = document.getElementById('radio-text');
     const radioDot = document.getElementById('radio-dot');
     let isPlaying = false;
 
-    // Set up HLS stream player
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(streamUrl);
-      hls.attachMedia(audio);
-    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-      audio.src = streamUrl;
-    }
+    audio.src = streamUrl;
 
     function toggleRadio() {
       if (!isPlaying) {
@@ -196,7 +191,8 @@
           radioText.textContent = "BBC Radio 6 Music (Playing)";
           radioDot.classList.add('playing');
         }).catch(err => {
-          radioText.textContent = "Tap to retry audio";
+          console.error("Playback error:", err);
+          radioText.textContent = "Tap to Retry 6 Music";
         });
       } else {
         audio.pause();
@@ -206,6 +202,26 @@
       }
     }
 
+    // --- First Tap Trigger ---
+    document.body.addEventListener('click', () => {
+      if (!isPlaying) {
+        toggleRadio();
+      }
+
+      // Request fullscreen mode
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
+
+      window.scrollTo(0, 10);
+    }, { once: true });
+
+    // Allow user to toggle radio on/off anytime by tapping the status bar
+    document.getElementById('radio-toggle').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleRadio();
+    });
+  </script>
     // --- First Tap Trigger ---
     document.body.addEventListener('click', () => {
       if (!isPlaying) {
