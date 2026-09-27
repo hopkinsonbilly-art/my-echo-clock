@@ -24,7 +24,7 @@
       justify-content: space-between;
       align-items: center;
       overflow: hidden;
-      padding: 16px 20px;
+      padding: 10px 16px; /* Reduced vertical padding */
       position: relative;
       transition: background-image 1s ease-in-out;
     }
@@ -70,9 +70,9 @@
       background: rgba(15, 23, 42, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #ffffff;
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 20px;
-      font-size: 1.2vw;
+      font-size: 1.1vw;
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -95,11 +95,10 @@
       align-items: center;
       text-align: center;
       z-index: 2;
-      margin-top: -10px;
     }
 
     .clock {
-      font-size: 22vw;
+      font-size: 18vw; /* Reduced from 22vw to save vertical height */
       font-weight: 700;
       letter-spacing: -3px;
       line-height: 0.9;
@@ -107,28 +106,27 @@
     }
 
     .date {
-      font-size: 3.2vw;
+      font-size: 2.8vw; /* Reduced slightly from 3.2vw */
       font-weight: 400;
       color: #ffffff;
-      margin-top: 15px;
+      margin-top: 8px;
       text-shadow: 0 2px 10px rgba(0,0,0,0.6);
     }
 
     /* Bottom Weather Info Bar */
     .weather-bar {
-      width: 96%;
+      width: 98%;
       max-width: 1100px;
       background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-radius: 18px;
+      border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 14px 24px;
+      padding: 10px 20px; /* Slimmed padding */
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 2;
-      margin-bottom: 10px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 
@@ -139,7 +137,7 @@
     }
 
     .weather-icon {
-      font-size: 3.5vw;
+      font-size: 3.2vw;
       line-height: 1;
     }
 
@@ -149,24 +147,24 @@
     }
 
     .current-temp {
-      font-size: 3.5vw;
+      font-size: 3.2vw;
       font-weight: 700;
       line-height: 1;
     }
 
     .weather-desc {
-      font-size: 1.4vw;
+      font-size: 1.2vw;
       font-weight: 700;
       color: #94a3b8;
       text-transform: uppercase;
-      margin-top: 4px;
+      margin-top: 2px;
       letter-spacing: 0.5px;
     }
 
     .weather-right {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
 
     .stat-box {
@@ -176,7 +174,7 @@
     }
 
     .stat-label {
-      font-size: 1.3vw;
+      font-size: 1.1vw;
       font-weight: 700;
       color: #94a3b8;
       text-transform: uppercase;
@@ -188,7 +186,7 @@
     }
 
     .stat-value {
-      font-size: 2.2vw;
+      font-size: 2vw;
       font-weight: 700;
       color: #ffffff;
       white-space: nowrap;
@@ -250,7 +248,7 @@
     </div>
   </div>
 
-  <!-- Embedded Base64 Silent Audio Stream (guarantees local playback) -->
+  <!-- Embedded Base64 Silent Audio Stream -->
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
@@ -356,7 +354,6 @@
     const btn = document.getElementById('fs-btn');
 
     function activateKeepAlive() {
-      // 1. Play embedded silent audio loop
       audio.play().then(() => {
         btn.textContent = "🟢 DISPLAY LOCKED (ACTIVE)";
         btn.classList.add('active');
@@ -364,7 +361,6 @@
         btn.textContent = "⚠️ TAP AGAIN TO LOCK";
       });
 
-      // 2. Request browser fullscreen mode
       const docEl = document.documentElement;
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
@@ -372,7 +368,6 @@
       }
     }
 
-    // Tap top-right button or anywhere on screen
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       activateKeepAlive();
