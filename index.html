@@ -24,7 +24,7 @@
       justify-content: space-between;
       align-items: center;
       overflow: hidden;
-      padding: 10px 16px; /* Reduced vertical padding */
+      padding: 10px 16px;
       position: relative;
       transition: background-image 1s ease-in-out;
     }
@@ -98,7 +98,7 @@
     }
 
     .clock {
-      font-size: 18vw; /* Reduced from 22vw to save vertical height */
+      font-size: 18vw;
       font-weight: 700;
       letter-spacing: -3px;
       line-height: 0.9;
@@ -106,7 +106,7 @@
     }
 
     .date {
-      font-size: 2.8vw; /* Reduced slightly from 3.2vw */
+      font-size: 2.8vw;
       font-weight: 400;
       color: #ffffff;
       margin-top: 8px;
@@ -122,7 +122,7 @@
       -webkit-backdrop-filter: blur(12px);
       border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 10px 20px; /* Slimmed padding */
+      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -206,7 +206,7 @@
 
   <!-- Center Container -->
   <div class="center-container">
-    <div class="clock" id="clock">--:--</div>
+    <div class="clock" id="clock">12:00</div>
     <div class="date" id="date">Loading date...</div>
   </div>
 
@@ -252,126 +252,99 @@
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    // --- Day / Night Image Filenames ---
-    const dayBg = "day.jpg";
-    const nightBg = "night.jpg";
+    document.addEventListener("DOMContentLoaded", function() {
+      // --- Background Controller ---
+      const dayBg = "day.jpg";
+      const nightBg = "night.jpg";
 
-    function updateBackground() {
-      const hour = new Date().getHours();
-      const isDay = hour >= 6 && hour < 20;
-      const targetBg = isDay ? dayBg : nightBg;
-      
-      document.body.style.backgroundImage = `url('${targetBg}')`;
-    }
+      function updateBackground() {
+        const hour = new Date().getHours();
+        const isDay = hour >= 6 && hour < 20;
+        document.body.style.backgroundImage = "url('" + (isDay ? dayBg : nightBg) + "')";
+      }
 
-    // --- Clock & Date ---
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clock').textContent = `${hours}:${minutes}`;
+      // --- Clock & Date ---
+      function updateClock() {
+        try {
+          const now = new Date();
+          let hours = now.getHours();
+          let minutes = now.getMinutes();
+          if (hours < 10) hours = "0" + hours;
+          if (minutes < 10) minutes = "0" + minutes;
+          
+          const clockEl = document.getElementById('clock');
+          if (clockEl) clockEl.textContent = hours + ":" + minutes;
 
-      const options = { weekday: 'long', day: 'numeric', month: 'long' };
-      document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
+          const dateEl = document.getElementById('date');
+          if (dateEl) {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            dateEl.textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+          }
 
-      updateBackground();
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // --- Weather Data (Open-Meteo for Sunderland UK) ---
-    const LAT = 54.9069;
-    const LON = -1.3819;
-
-    const weatherIcons = {
-      0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-      45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️",
-      55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
-      71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️",
-      95: "🌩️"
-    };
-
-    const weatherCodes = {
-      0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST",
-      45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE",
-      55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN",
-      71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS",
-      95: "THUNDERSTORM"
-    };
-
-    async function fetchWeather() {
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Weather network error");
-        const data = await response.json();
-
-        // Current Temp & Status
-        if (data.current_weather) {
-          const temp = Math.round(data.current_weather.temperature);
-          const code = data.current_weather.weathercode;
-          document.getElementById('temp').textContent = `${temp}°C`;
-          document.getElementById('weather-desc').textContent = weatherCodes[code] || "CLOUDY";
-          document.getElementById('weather-icon').textContent = weatherIcons[code] || "☁️";
-
-          // Wind Speed
-          const wind = Math.round(data.current_weather.windspeed);
-          document.getElementById('wind').textContent = `${wind} km/h`;
+          updateBackground();
+        } catch(e) {
+          console.error("Clock update error:", e);
         }
+      }
 
-        // High / Low
-        if (data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
-          const high = Math.round(data.daily.temperature_2m_max[0]);
-          const low = Math.round(data.daily.temperature_2m_min[0]);
-          document.getElementById('high-low').textContent = `${high}°/${low}°`;
-        }
+      setInterval(updateClock, 1000);
+      updateClock();
 
-        // Sunrise Format
-        if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
-          const sunriseTime = data.daily.sunrise[0].split("T")[1];
-          document.getElementById('sunrise').textContent = sunriseTime;
-        }
+      // --- Weather Data (Sunderland UK) ---
+      const LAT = 54.9069;
+      const LON = -1.3819;
 
-        // Humidity (Safely handle hourly index)
-        const currentHour = new Date().getHours();
-        if (data.hourly && data.hourly.relativehumidity_2m) {
-          const humidity = data.hourly.relativehumidity_2m[currentHour] ?? data.hourly.relativehumidity_2m[0] ?? "--";
-          document.getElementById('humidity').textContent = `${humidity}%`;
-        }
+      const weatherIcons = {
+        0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+        45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️",
+        55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
+        71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️",
+        95: "🌩️"
+      };
 
-        // Rain Check
-        if (data.hourly && data.hourly.precipitation_probability) {
-          const precipProbs = data.hourly.precipitation_probability;
-          let rainHourText = "NONE";
-          for (let i = currentHour; i < currentHour + 24; i++) {
-            if (precipProbs[i] > 30) {
-              const h = i % 24;
-              rainHourText = `${String(h).padStart(2, '0')}:00`;
-              break;
+      const weatherCodes = {
+        0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST",
+        45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE",
+        55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN",
+        71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS",
+        95: "THUNDERSTORM"
+      };
+
+      async function fetchWeather() {
+        try {
+          const url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+          const response = await fetch(url);
+          if (!response.ok) return;
+          const data = await response.json();
+
+          if (data && data.current_weather) {
+            const temp = Math.round(data.current_weather.temperature);
+            const code = data.current_weather.weathercode;
+            const tempEl = document.getElementById('temp');
+            const descEl = document.getElementById('weather-desc');
+            const iconEl = document.getElementById('weather-icon');
+            const windEl = document.getElementById('wind');
+
+            if (tempEl) tempEl.textContent = temp + "°C";
+            if (descEl) descEl.textContent = weatherCodes[code] || "CLOUDY";
+            if (iconEl) iconEl.textContent = weatherIcons[code] || "☁️";
+            if (windEl) windEl.textContent = Math.round(data.current_weather.windspeed) + " km/h";
+          }
+
+          if (data && data.daily) {
+            const hlEl = document.getElementById('high-low');
+            if (hlEl && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
+              const high = Math.round(data.daily.temperature_2m_max[0]);
+              const low = Math.round(data.daily.temperature_2m_min[0]);
+              hlEl.textContent = high + "°/" + low + "°";
+            }
+
+            const sunEl = document.getElementById('sunrise');
+            if (sunEl && data.daily.sunrise && data.daily.sunrise[0]) {
+              const parts = data.daily.sunrise[0].split("T");
+              if (parts[1]) sunEl.textContent = parts[1];
             }
           }
-          document.getElementById('rain-time').textContent = rainHourText;
-        }
 
-      } catch (err) {
-        console.error("Weather fetch failed:", err);
-        document.getElementById('weather-desc').textContent = "UNAVAILABLE";
-      }
-    }
-    fetchWeather();
-    setInterval(fetchWeather, 900000);
-
-    // --- Audio Keep-Alive & Fullscreen Controller ---
-    const audio = document.getElementById('silent-audio');
-    const btn = document.getElementById('fs-btn');
-
-    function activateKeepAlive() {
-      audio.play().then(() => {
-        btn.textContent = "🟢 DISPLAY LOCKED (ACTIVE)";
-        btn.classList.add('active');
-      }).catch((err) => {
-        btn.textContent = "⚠️ TAP AGAIN TO LOCK";
-      });
-
-      const docEl = document.documentElement;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          const currentHour = new Date().
