@@ -64,7 +64,7 @@
     }
 
     .fullscreen-btn {
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.75);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #ffffff;
       padding: 6px 14px;
@@ -72,6 +72,12 @@
       font-size: 1.1vw;
       font-weight: 700;
       cursor: pointer;
+    }
+
+    .fullscreen-btn.active {
+      background: rgba(46, 213, 115, 0.35);
+      border-color: #2ed573;
+      color: #ffffff;
     }
 
     .center-container {
@@ -191,7 +197,7 @@
       <div class="weather-icon" id="weather-icon">☀️</div>
       <div class="temp-group">
         <div class="current-temp" id="temp">--°C</div>
-        <div class="weather-desc" id="weather-desc">LOADING</div>
+        <div class="weather-desc" id="weather-desc">FETCHING...</div>
       </div>
     </div>
 
@@ -252,42 +258,32 @@
     var wIcons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var wCodes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    // JSONP callback function
-    window.handleWeatherResponse = function(res) {
+    function parseWeatherData(res) {
       if (!res) return;
       
       if (res.current_weather) {
-        var t = document.getElementById('temp');
-        var d = document.getElementById('weather-desc');
-        var i = document.getElementById('weather-icon');
-        var w = document.getElementById('wind');
-
-        if (t) t.innerHTML = Math.round(res.current_weather.temperature) + "°C";
-        if (d) d.innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
-        if (i) i.innerHTML = wIcons[res.current_weather.weathercode] || "☁️";
-        if (w) w.innerHTML = Math.round(res.current_weather.windspeed) + " km/h";
+        document.getElementById('temp').innerHTML = Math.round(res.current_weather.temperature) + "°C";
+        document.getElementById('weather-desc').innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
+        document.getElementById('weather-icon').innerHTML = wIcons[res.current_weather.weathercode] || "☁️";
+        document.getElementById('wind').innerHTML = Math.round(res.current_weather.windspeed) + " km/h";
       }
 
       if (res.daily && res.daily.temperature_2m_max && res.daily.temperature_2m_min) {
-        var hl = document.getElementById('high-low');
-        if (hl) hl.innerHTML = Math.round(res.daily.temperature_2m_max[0]) + "°/" + Math.round(res.daily.temperature_2m_min[0]) + "°";
+        document.getElementById('high-low').innerHTML = Math.round(res.daily.temperature_2m_max[0]) + "°/" + Math.round(res.daily.temperature_2m_min[0]) + "°";
       }
 
       if (res.daily && res.daily.sunrise && res.daily.sunrise[0]) {
-        var sr = document.getElementById('sunrise');
         var s = res.daily.sunrise[0].split("T");
-        if (sr && s[1]) sr.innerHTML = s[1];
+        if (s[1]) document.getElementById('sunrise').innerHTML = s[1];
       }
 
       if (res.hourly) {
         var hr = new Date().getHours();
-        var hum = document.getElementById('humidity');
-        if (hum && res.hourly.relativehumidity_2m) {
-          hum.innerHTML = (res.hourly.relativehumidity_2m[hr] || "--") + "%";
+        if (res.hourly.relativehumidity_2m) {
+          document.getElementById('humidity').innerHTML = (res.hourly.relativehumidity_2m[hr] || "--") + "%";
         }
 
-        var rt = document.getElementById('rain-time');
-        if (rt && res.hourly.precipitation_probability) {
+        if (res.hourly.precipitation_probability) {
           var p = res.hourly.precipitation_probability;
           var r = "NONE";
           for (var idx = hr; idx < hr + 24; idx++) {
@@ -297,34 +293,51 @@
               break;
             }
           }
-          rt.innerHTML = r;
+          document.getElementById('rain-time').innerHTML = r;
         }
       }
-    };
+    }
 
     function fetchWeather() {
-      var oldTag = document.getElementById('weather-jsonp');
-      if (oldTag) {
-        oldTag.parentNode.removeChild(oldTag);
-      }
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
 
-      var script = document.createElement('script');
-      script.id = 'weather-jsonp';
-      script.src = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon&jsonp=handleWeatherResponse";
-      document.body.appendChild(script);
+      fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(data) { parseWeatherData(data); })
+        .catch(function(err) {
+          document.getElementById('weather-desc').innerHTML = "NET ERR";
+        });
     }
 
     fetchWeather();
     setInterval(fetchWeather, 900000);
 
-    var a = document.getElementById('silent-audio');
-    var b = document.getElementById('fs-btn');
-    if (b) {
-      b.onclick = function() {
-        if (a) a.play();
-        b.innerHTML = "🟢 DISPLAY LOCKED";
+    var audio = document.getElementById('silent-audio');
+    var btn = document.getElementById('fs-btn');
+
+    function lockDisplay() {
+      if (audio) {
+        audio.play().then(function() {
+          if (btn) {
+            btn.innerHTML = "🟢 DISPLAY LOCKED";
+            btn.className = "fullscreen-btn active";
+          }
+        }).catch(function() {
+          if (btn) { btn.innerHTML = "⚠️ TAP AGAIN"; }
+        });
+      }
+    }
+
+    if (btn) {
+      btn.onclick = function(e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        lockDisplay();
       };
     }
+
+    document.body.onclick = function() {
+      lockDisplay();
+    };
   </script>
 </body>
 </html>
