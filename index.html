@@ -258,7 +258,8 @@
     var wIcons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var wCodes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    function parseWeatherData(res) {
+    // Global callback required for JSONP injection
+    window.processWeatherData = function(res) {
       if (!res) return;
       
       if (res.current_weather) {
@@ -296,32 +297,23 @@
           document.getElementById('rain-time').innerHTML = r;
         }
       }
+    };
+
+    function loadWeatherJSONP() {
+      var oldScript = document.getElementById('jsonp-weather-script');
+      if (oldScript) {
+        oldScript.parentNode.removeChild(oldScript);
+      }
+
+      var script = document.createElement('script');
+      script.id = 'jsonp-weather-script';
+      // Append timestamp to url to bypass aggressive Silk caching
+      script.src = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon&jsonp=processWeatherData&_t=" + new Date().getTime();
+      document.body.appendChild(script);
     }
 
-    // Dynamic iframe worker bypass for strict Silk MyPage webview containers
-    function fetchWeather() {
-      var iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
-
-      var doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write('<script>var xhr = new XMLHttpRequest(); xhr.open("GET", "' + url + '", true); xhr.onreadystatechange = function() { if (xhr.readyState === 4 && xhr.status === 200) { window.parent.postMessage(xhr.responseText, "*"); } }; xhr.send();<\/script>');
-      doc.close();
-
-      window.addEventListener('message', function(event) {
-        try {
-          var data = JSON.parse(event.data);
-          parseWeatherData(data);
-          if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
-        } catch(e) {}
-      }, { once: true });
-    }
-
-    fetchWeather();
-    setInterval(fetchWeather, 900000);
+    loadWeatherJSONP();
+    setInterval(loadWeatherJSONP, 900000);
 
     var audio = document.getElementById('silent-audio');
     var btn = document.getElementById('fs-btn');
