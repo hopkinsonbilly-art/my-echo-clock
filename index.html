@@ -12,7 +12,6 @@
     }
     html, body {
       background-color: #0b1329;
-      background-image: url('./night.jpg');
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -64,19 +63,20 @@
     }
 
     .fullscreen-btn {
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       color: #ffffff;
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 20px;
-      font-size: 1.1vw;
+      font-size: 1.2vw;
       font-weight: 700;
       cursor: pointer;
     }
 
     .fullscreen-btn.active {
-      background: rgba(46, 213, 115, 0.35);
+      background: rgba(46, 213, 115, 0.4);
       border-color: #2ed573;
+      color: #ffffff;
     }
 
     .center-container {
@@ -106,7 +106,7 @@
     .weather-bar {
       width: 98%;
       max-width: 1100px;
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.8);
       border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 10px 20px;
@@ -183,7 +183,7 @@
       <div class="green-dot"></div>
       SUNDERLAND
     </div>
-    <button class="fullscreen-btn" id="fs-btn">🔴 TAP TO LOCK DISPLAY</button>
+    <button class="fullscreen-btn" id="fs-btn">🔴 TAP ANYWHERE TO LOCK</button>
   </div>
 
   <div class="center-container">
@@ -196,7 +196,7 @@
       <div class="weather-icon" id="weather-icon">☁️</div>
       <div class="temp-group">
         <div class="current-temp" id="temp">--°C</div>
-        <div class="weather-desc" id="weather-desc">STARTING</div>
+        <div class="weather-desc" id="weather-desc">LOADING</div>
       </div>
     </div>
 
@@ -231,96 +231,120 @@
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    // 1. Clock & Image Switcher
-    function tick() {
+    // Pure ES5 Clock & Background Update
+    function updateDashboard() {
       var now = new Date();
-      var h = now.getHours();
-      var m = now.getMinutes();
-      h = h < 10 ? "0" + h : h;
-      m = m < 10 ? "0" + m : m;
+      var hours = now.getHours();
+      var minutes = now.getMinutes();
+      
+      var hStr = hours < 10 ? "0" + hours : "" + hours;
+      var mStr = minutes < 10 ? "0" + minutes : "" + minutes;
 
-      document.getElementById('clock').innerHTML = h + ":" + m;
+      var clockEl = document.getElementById('clock');
+      if (clockEl) { clockEl.innerHTML = hStr + ":" + mStr; }
 
       var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
       var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      document.getElementById('date').innerHTML = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+      
+      var dateEl = document.getElementById('date');
+      if (dateEl) {
+        dateEl.innerHTML = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+      }
 
-      var isDay = now.getHours() >= 6 && now.getHours() < 19;
-      document.body.style.backgroundImage = "url('./" + (isDay ? "day.jpg" : "night.jpg") + "')";
+      var isDay = hours >= 6 && hours < 19;
+      var bgImg = isDay ? "day.jpg" : "night.jpg";
+      document.body.style.backgroundImage = "url('./" + bgImg + "')";
     }
-    
-    tick();
-    setInterval(tick, 1000);
 
-    // 2. Weather Loader
+    updateDashboard();
+    setInterval(updateDashboard, 1000);
+
+    // Weather Codes & Icons
     var icons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var codes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    function getWeather() {
-      document.getElementById('weather-desc').innerHTML = "FETCHING...";
+    // Pure ES5 XMLHttpRequest for Weather
+    function fetchWeather() {
+      var xhr = new XMLHttpRequest();
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
 
-      fetch("https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon")
-        .then(function(response) {
-          if (!response.ok) { throw new Error("HTTP " + response.status); }
-          return response.json();
-        })
-        .then(function(data) {
-          if (data && data.current_weather) {
-            document.getElementById('temp').innerHTML = Math.round(data.current_weather.temperature) + "°C";
-            document.getElementById('weather-desc').innerHTML = codes[data.current_weather.weathercode] || "CLEAR";
-            document.getElementById('weather-icon').innerHTML = icons[data.current_weather.weathercode] || "☀️";
-            document.getElementById('wind').innerHTML = Math.round(data.current_weather.windspeed) + " km/h";
-          }
-          if (data && data.daily) {
-            document.getElementById('high-low').innerHTML = Math.round(data.daily.temperature_2m_max[0]) + "°/" + Math.round(data.daily.temperature_2m_min[0]) + "°";
-            if (data.daily.sunrise && data.daily.sunrise[0]) {
-              var s = data.daily.sunrise[0].split("T");
-              if (s[1]) document.getElementById('sunrise').innerHTML = s[1];
-            }
-          }
-          if (data && data.hourly) {
-            var curH = new Date().getHours();
-            if (data.hourly.relativehumidity_2m) {
-              document.getElementById('humidity').innerHTML = (data.hourly.relativehumidity_2m[curH] || "--") + "%";
-            }
-            if (data.hourly.precipitation_probability) {
-              var p = data.hourly.precipitation_probability;
-              var r = "NONE";
-              for (var i = curH; i < curH + 24; i++) {
-                if (p[i] && p[i] > 30) {
-                  var hr = i % 24;
-                  r = (hr < 10 ? "0" + hr : hr) + ":00";
-                  break;
+      xhr.open("GET", url, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+
+              if (data && data.current_weather) {
+                document.getElementById('temp').innerHTML = Math.round(data.current_weather.temperature) + "°C";
+                document.getElementById('weather-desc').innerHTML = codes[data.current_weather.weathercode] || "CLEAR";
+                document.getElementById('weather-icon').innerHTML = icons[data.current_weather.weathercode] || "☀️";
+                document.getElementById('wind').innerHTML = Math.round(data.current_weather.windspeed) + " km/h";
+              }
+
+              if (data && data.daily) {
+                var hi = Math.round(data.daily.temperature_2m_max[0]);
+                var lo = Math.round(data.daily.temperature_2m_min[0]);
+                document.getElementById('high-low').innerHTML = hi + "°/" + lo + "°";
+
+                if (data.daily.sunrise && data.daily.sunrise[0]) {
+                  var parts = data.daily.sunrise[0].split("T");
+                  if (parts[1]) { document.getElementById('sunrise').innerHTML = parts[1]; }
                 }
               }
-              document.getElementById('rain-time').innerHTML = r;
+
+              if (data && data.hourly) {
+                var curH = new Date().getHours();
+                if (data.hourly.relativehumidity_2m) {
+                  var humVal = data.hourly.relativehumidity_2m[curH];
+                  document.getElementById('humidity').innerHTML = (humVal !== undefined ? humVal : "--") + "%";
+                }
+
+                if (data.hourly.precipitation_probability) {
+                  var p = data.hourly.precipitation_probability;
+                  var r = "NONE";
+                  for (var i = curH; i < curH + 24; i++) {
+                    if (p[i] && p[i] > 30) {
+                      var hr = i % 24;
+                      r = (hr < 10 ? "0" + hr : "" + hr) + ":00";
+                      break;
+                    }
+                  }
+                  document.getElementById('rain-time').innerHTML = r;
+                }
+              }
+            } catch(e) {
+              document.getElementById('weather-desc').innerHTML = "PARSE ERR";
             }
+          } else {
+            document.getElementById('weather-desc').innerHTML = "HTTP " + xhr.status;
           }
-        })
-        .catch(function(err) {
-          document.getElementById('weather-desc').innerHTML = "ERR: " + (err.message || "BLOCKED");
-        });
+        }
+      };
+      xhr.send();
     }
 
-    getWeather();
-    setInterval(getWeather, 900000);
+    fetchWeather();
+    setInterval(fetchWeather, 900000);
 
-    // 3. Audio Keep-Alive
+    // Direct Audio Lock Function
     var audio = document.getElementById('silent-audio');
     var btn = document.getElementById('fs-btn');
+    var isLocked = false;
 
-    function lock() {
-      if (audio) {
+    function lockDisplay() {
+      if (!isLocked && audio) {
         audio.play();
+        isLocked = true;
         if (btn) {
-          btn.innerHTML = "🟢 DISPLAY LOCKED";
+          btn.innerHTML = "🟢 DISPLAY LOCKED (ACTIVE)";
           btn.className = "fullscreen-btn active";
         }
       }
     }
 
-    if (btn) { btn.onclick = lock; }
-    document.body.onclick = lock;
+    if (btn) { btn.onclick = lockDisplay; }
+    document.body.onclick = lockDisplay;
   </script>
 </body>
 </html>
