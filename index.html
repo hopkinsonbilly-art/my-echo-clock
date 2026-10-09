@@ -11,7 +11,7 @@
       padding: 0;
     }
     html, body {
-      background-color: #000000;
+      background-color: #0b1329;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -26,10 +26,9 @@
       overflow: hidden;
       padding: 10px 16px;
       position: relative;
-      transition: background-image 1s ease-in-out;
     }
 
-    /* Dark Tint Overlay */
+    /* Dark Overlay for Text Readability */
     body::before {
       content: '';
       position: absolute;
@@ -243,8 +242,8 @@
       if (dt) { dt.innerHTML = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()]; }
 
       var isDay = h >= 6 && h < 20;
-      var bgFile = isDay ? "day.jpg" : "night.jpg";
-      document.body.style.backgroundImage = "url('" + bgFile + "')";
+      var imgName = isDay ? "day.jpg" : "night.jpg";
+      document.body.style.backgroundImage = "url('./" + imgName + "')";
     }
 
     renderTime();
@@ -253,58 +252,74 @@
     var wIcons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var wCodes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    function parseWeather(res) {
-      if (res && res.current_weather) {
-        document.getElementById('temp').innerHTML = Math.round(res.current_weather.temperature) + "°C";
-        document.getElementById('weather-desc').innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
-        document.getElementById('weather-icon').innerHTML = wIcons[res.current_weather.weathercode] || "☁️";
-        document.getElementById('wind').innerHTML = Math.round(res.current_weather.windspeed) + " km/h";
+    function parseWeatherData(res) {
+      if (!res) return;
+      
+      if (res.current_weather) {
+        var t = document.getElementById('temp');
+        var d = document.getElementById('weather-desc');
+        var i = document.getElementById('weather-icon');
+        var w = document.getElementById('wind');
+
+        if (t) t.innerHTML = Math.round(res.current_weather.temperature) + "°C";
+        if (d) d.innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
+        if (i) i.innerHTML = wIcons[res.current_weather.weathercode] || "☁️";
+        if (w) w.innerHTML = Math.round(res.current_weather.windspeed) + " km/h";
       }
-      if (res && res.daily) {
-        document.getElementById('high-low').innerHTML = Math.round(res.daily.temperature_2m_max[0]) + "°/" + Math.round(res.daily.temperature_2m_min[0]) + "°";
+
+      if (res.daily && res.daily.temperature_2m_max && res.daily.temperature_2m_min) {
+        var hl = document.getElementById('high-low');
+        if (hl) hl.innerHTML = Math.round(res.daily.temperature_2m_max[0]) + "°/" + Math.round(res.daily.temperature_2m_min[0]) + "°";
+      }
+
+      if (res.daily && res.daily.sunrise && res.daily.sunrise[0]) {
+        var sr = document.getElementById('sunrise');
         var s = res.daily.sunrise[0].split("T");
-        if (s[1]) document.getElementById('sunrise').innerHTML = s[1];
+        if (sr && s[1]) sr.innerHTML = s[1];
       }
-      if (res && res.hourly) {
+
+      if (res.hourly) {
         var hr = new Date().getHours();
-        if (res.hourly.relativehumidity_2m) {
-          document.getElementById('humidity').innerHTML = (res.hourly.relativehumidity_2m[hr] || "--") + "%";
+        var hum = document.getElementById('humidity');
+        if (hum && res.hourly.relativehumidity_2m) {
+          hum.innerHTML = (res.hourly.relativehumidity_2m[hr] || "--") + "%";
         }
-        if (res.hourly.precipitation_probability) {
+
+        var rt = document.getElementById('rain-time');
+        if (rt && res.hourly.precipitation_probability) {
           var p = res.hourly.precipitation_probability;
           var r = "NONE";
-          for (var i = hr; i < hr + 24; i++) {
-            if (p[i] && p[i] > 30) {
-              var x = i % 24;
+          for (var idx = hr; idx < hr + 24; idx++) {
+            if (p[idx] && p[idx] > 30) {
+              var x = idx % 24;
               r = (x < 10 ? "0" + x : x) + ":00";
               break;
             }
           }
-          document.getElementById('rain-time').innerHTML = r;
+          rt.innerHTML = r;
         }
       }
     }
 
-    function loadWeather() {
-      var endpoint = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
-      
-      fetch(endpoint)
-        .then(function(response) { return response.json(); })
-        .then(function(data) { parseWeather(data); })
-        .catch(function(err) {
-          var req = new XMLHttpRequest();
-          req.open("GET", endpoint, true);
-          req.onreadystatechange = function() {
-            if (req.readyState === 4 && req.status === 200) {
-              try { parseWeather(JSON.parse(req.responseText)); } catch(e) {}
-            }
-          };
-          req.send();
-        });
+    function fetchWeather() {
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 400) {
+            try {
+              parseWeatherData(JSON.parse(xhr.responseText));
+            } catch(e) {}
+          }
+        }
+      };
+      xhr.send();
     }
 
-    loadWeather();
-    setInterval(loadWeather, 900000);
+    fetchWeather();
+    setInterval(fetchWeather, 900000);
 
     var a = document.getElementById('silent-audio');
     var b = document.getElementById('fs-btn');
