@@ -303,46 +303,58 @@
       try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon`;
         const response = await fetch(url);
+        if (!response.ok) throw new Error("Weather network error");
         const data = await response.json();
 
         // Current Temp & Status
-        const temp = Math.round(data.current_weather.temperature);
-        const code = data.current_weather.weathercode;
-        document.getElementById('temp').textContent = `${temp}°C`;
-        document.getElementById('weather-desc').textContent = weatherCodes[code] || "CLOUDY";
-        document.getElementById('weather-icon').textContent = weatherIcons[code] || "☁️";
+        if (data.current_weather) {
+          const temp = Math.round(data.current_weather.temperature);
+          const code = data.current_weather.weathercode;
+          document.getElementById('temp').textContent = `${temp}°C`;
+          document.getElementById('weather-desc').textContent = weatherCodes[code] || "CLOUDY";
+          document.getElementById('weather-icon').textContent = weatherIcons[code] || "☁️";
+
+          // Wind Speed
+          const wind = Math.round(data.current_weather.windspeed);
+          document.getElementById('wind').textContent = `${wind} km/h`;
+        }
 
         // High / Low
-        const high = Math.round(data.daily.temperature_2m_max[0]);
-        const low = Math.round(data.daily.temperature_2m_min[0]);
-        document.getElementById('high-low').textContent = `${high}°/${low}°`;
-
-        // Wind Speed
-        const wind = Math.round(data.current_weather.windspeed);
-        document.getElementById('wind').textContent = `${wind} km/h`;
-
-        // Humidity
-        const currentHour = new Date().getHours();
-        const humidity = data.hourly.relativehumidity_2m[currentHour] || "--";
-        document.getElementById('humidity').textContent = `${humidity}%`;
+        if (data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
+          const high = Math.round(data.daily.temperature_2m_max[0]);
+          const low = Math.round(data.daily.temperature_2m_min[0]);
+          document.getElementById('high-low').textContent = `${high}°/${low}°`;
+        }
 
         // Sunrise Format
-        const sunriseTime = data.daily.sunrise[0].split("T")[1];
-        document.getElementById('sunrise').textContent = sunriseTime;
+        if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
+          const sunriseTime = data.daily.sunrise[0].split("T")[1];
+          document.getElementById('sunrise').textContent = sunriseTime;
+        }
+
+        // Humidity (Safely handle hourly index)
+        const currentHour = new Date().getHours();
+        if (data.hourly && data.hourly.relativehumidity_2m) {
+          const humidity = data.hourly.relativehumidity_2m[currentHour] ?? data.hourly.relativehumidity_2m[0] ?? "--";
+          document.getElementById('humidity').textContent = `${humidity}%`;
+        }
 
         // Rain Check
-        const precipProbs = data.hourly.precipitation_probability;
-        let rainHourText = "NONE";
-        for (let i = currentHour; i < currentHour + 24; i++) {
-          if (precipProbs[i] > 30) {
-            const h = i % 24;
-            rainHourText = `${String(h).padStart(2, '0')}:00`;
-            break;
+        if (data.hourly && data.hourly.precipitation_probability) {
+          const precipProbs = data.hourly.precipitation_probability;
+          let rainHourText = "NONE";
+          for (let i = currentHour; i < currentHour + 24; i++) {
+            if (precipProbs[i] > 30) {
+              const h = i % 24;
+              rainHourText = `${String(h).padStart(2, '0')}:00`;
+              break;
+            }
           }
+          document.getElementById('rain-time').textContent = rainHourText;
         }
-        document.getElementById('rain-time').textContent = rainHourText;
 
       } catch (err) {
+        console.error("Weather fetch failed:", err);
         document.getElementById('weather-desc').textContent = "UNAVAILABLE";
       }
     }
@@ -363,19 +375,3 @@
 
       const docEl = document.documentElement;
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
-        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
-      }
-    }
-
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      activateKeepAlive();
-    });
-
-    document.body.addEventListener('click', () => {
-      activateKeepAlive();
-    }, { once: true });
-  </script>
-</body>
-</html>
