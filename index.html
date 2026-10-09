@@ -182,7 +182,7 @@
   </div>
 
   <div class="center-container">
-    <div class="clock" id="clock">12:00</div>
+    <div class="clock" id="clock">--:--</div>
     <div class="date" id="date">Loading...</div>
   </div>
 
@@ -241,7 +241,8 @@
       var dt = document.getElementById('date');
       if (dt) { dt.innerHTML = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()]; }
 
-      var isDay = h >= 6 && h < 20;
+      // Day mode: 06:00 to 18:59, Night mode: 19:00 to 05:59
+      var isDay = h >= 6 && h < 19;
       var imgName = isDay ? "day.jpg" : "night.jpg";
       document.body.style.backgroundImage = "url('./" + imgName + "')";
     }
@@ -302,16 +303,27 @@
     }
 
     function fetchWeather() {
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+      var rawUrl = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+      var proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(rawUrl);
 
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", url, true);
+      xhr.open("GET", proxyUrl, true);
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
           if (xhr.status >= 200 && xhr.status < 400) {
             try {
               parseWeatherData(JSON.parse(xhr.responseText));
             } catch(e) {}
+          } else {
+            // Direct fallback attempt if proxy fails
+            var xhr2 = new XMLHttpRequest();
+            xhr2.open("GET", rawUrl, true);
+            xhr2.onreadystatechange = function() {
+              if (xhr2.readyState === 4 && xhr2.status >= 200 && xhr2.status < 400) {
+                try { parseWeatherData(JSON.parse(xhr2.responseText)); } catch(e) {}
+              }
+            };
+            xhr2.send();
           }
         }
       };
