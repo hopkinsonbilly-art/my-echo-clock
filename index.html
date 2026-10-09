@@ -5,73 +5,242 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Echo Show Sunderland Dashboard</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     html, body {
-      background-color: #0b1329;
+      background-color: #0f172a;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
       color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      height: 100vh; width: 100vw;
-      display: flex; flex-direction: column;
-      justify-content: space-between; align-items: center;
-      overflow: hidden; padding: 10px 16px; position: relative;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh; 
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      overflow: hidden;
+      padding: 10px 16px;
+      position: relative;
+      transition: background-image 1s ease-in-out;
     }
+
     body::before {
-      content: ''; position: absolute;
+      content: '';
+      position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.45); z-index: 1;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1;
     }
-    .header-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
-    .location-badge { display: flex; align-items: center; gap: 6px; font-size: 1.1vw; font-weight: 700; letter-spacing: 1px; color: #ffffff; text-transform: uppercase; }
-    .green-dot { width: 8px; height: 8px; background-color: #2ed573; border-radius: 50%; }
-    .fullscreen-btn { background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; padding: 8px 16px; border-radius: 20px; font-size: 1.2vw; font-weight: 700; cursor: pointer; }
-    .fullscreen-btn.active { background: rgba(46, 213, 115, 0.4); border-color: #2ed573; }
-    .center-container { display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; }
-    .clock { font-size: 18vw; font-weight: 700; letter-spacing: -3px; line-height: 0.9; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
-    .date { font-size: 2.8vw; font-weight: 400; color: #ffffff; margin-top: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
-    .weather-bar { width: 98%; max-width: 1100px; background: rgba(15, 23, 42, 0.8); border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
-    .weather-left { display: flex; align-items: center; gap: 12px; }
-    .weather-icon { font-size: 3.2vw; line-height: 1; }
-    .temp-group { display: flex; flex-direction: column; }
-    .current-temp { font-size: 3.2vw; font-weight: 700; line-height: 1; }
-    .weather-desc { font-size: 1.2vw; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; }
-    .weather-right { display: flex; align-items: center; gap: 20px; }
-    .stat-box { display: flex; flex-direction: column; align-items: flex-start; }
-    .stat-label { font-size: 1.1vw; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-    .stat-value { font-size: 2vw; font-weight: 700; color: #ffffff; white-space: nowrap; }
+
+    .header-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .location-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.1vw;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+
+    .green-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #2ed573;
+      border-radius: 50%;
+    }
+
+    .fullscreen-btn {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 1.1vw;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.2s;
+    }
+
+    .fullscreen-btn.active {
+      background: rgba(46, 213, 115, 0.3);
+      border-color: #2ed573;
+    }
+
+    .center-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .clock {
+      font-size: 18vw;
+      font-weight: 700;
+      letter-spacing: -3px;
+      line-height: 0.9;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    .date {
+      font-size: 2.8vw;
+      font-weight: 400;
+      color: #ffffff;
+      margin-top: 8px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+
+    .weather-bar {
+      width: 98%;
+      max-width: 1100px;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 2;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .weather-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .weather-icon {
+      font-size: 3.2vw;
+      line-height: 1;
+    }
+
+    .temp-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .current-temp {
+      font-size: 3.2vw;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .weather-desc {
+      font-size: 1.2vw;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    .weather-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .stat-label {
+      font-size: 1.1vw;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 2vw;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Header Bar -->
   <div class="header-bar">
-    <div class="location-badge"><div class="green-dot"></div>SUNDERLAND</div>
+    <div class="location-badge">
+      <div class="green-dot"></div>
+      SUNDERLAND
+    </div>
     <button class="fullscreen-btn" id="fs-btn">🔴 TAP TO LOCK DISPLAY</button>
   </div>
 
+  <!-- Center Container -->
   <div class="center-container">
     <div class="clock" id="clock">--:--</div>
-    <div class="date" id="date">Loading...</div>
+    <div class="date" id="date">--</div>
   </div>
 
+  <!-- Bottom Weather Widget -->
   <div class="weather-bar">
     <div class="weather-left">
-      <div class="weather-icon" id="weather-icon">☁️</div>
+      <div class="weather-icon" id="weather-icon">☀️</div>
       <div class="temp-group">
         <div class="current-temp" id="temp">--°C</div>
         <div class="weather-desc" id="weather-desc">LOADING</div>
       </div>
     </div>
+
     <div class="weather-right">
-      <div class="stat-box"><div class="stat-label">☔ RAIN AT</div><div class="stat-value" id="rain-time">--:--</div></div>
-      <div class="stat-box"><div class="stat-label">HIGH / LOW</div><div class="stat-value" id="high-low">--°/--°</div></div>
-      <div class="stat-box"><div class="stat-label">HUMIDITY</div><div class="stat-value" id="humidity">--%</div></div>
-      <div class="stat-box"><div class="stat-label">WIND</div><div class="stat-value" id="wind">-- km/h</div></div>
-      <div class="stat-box"><div class="stat-label">☀️ SUNRISE</div><div class="stat-value" id="sunrise">--:--</div></div>
+      <div class="stat-box">
+        <div class="stat-label">☔ RAIN AT</div>
+        <div class="stat-value" id="rain-time">--:--</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">HIGH / LOW</div>
+        <div class="stat-value" id="high-low">--°/--°</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">HUMIDITY</div>
+        <div class="stat-value" id="humidity">--%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">WIND</div>
+        <div class="stat-value" id="wind">-- km/h</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">☀️ SUNRISE</div>
+        <div class="stat-value" id="sunrise">--:--</div>
+      </div>
     </div>
   </div>
 
+  <!-- Embedded Base64 Silent Audio Stream -->
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
@@ -79,81 +248,128 @@
       var now = new Date();
       var hours = now.getHours();
       var minutes = now.getMinutes();
-      var hStr = hours < 10 ? "0" + hours : "" + hours;
-      var mStr = minutes < 10 ? "0" + minutes : "" + minutes;
+      if (hours < 10) { hours = "0" + hours; }
+      if (minutes < 10) { minutes = "0" + minutes; }
 
-      document.getElementById('clock').innerHTML = hStr + ":" + mStr;
+      var clockEl = document.getElementById('clock');
+      if (clockEl) { clockEl.innerHTML = hours + ":" + minutes; }
 
-      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      document.getElementById('date').innerHTML = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+      var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      var dateEl = document.getElementById('date');
+      if (dateEl) {
+        dateEl.innerHTML = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+      }
 
       var isDay = hours >= 6 && hours < 19;
-      document.body.style.backgroundImage = "url('./" + (isDay ? "day.jpg" : "night.jpg") + "')";
+      var bgImg = isDay ? "day.jpg" : "night.jpg";
+      document.body.style.backgroundImage = "url('" + bgImg + "')";
     }
+
     updateClock();
     setInterval(updateClock, 1000);
 
-    var icons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
-    var codes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
+    var weatherIcons = { 0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️", 55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️", 71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️", 95: "🌩️" };
+    var weatherCodes = { 0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST", 45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE", 55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN", 71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS", 95: "THUNDERSTORM" };
 
-    function fetchLocalWeather() {
+    function fetchWeather() {
+      var LAT = 54.9069;
+      var LON = -1.3819;
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "./weather.json?_t=" + new Date().getTime(), true);
+      xhr.open("GET", url, true);
       xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          try {
-            var data = JSON.parse(xhr.responseText);
-            if (data && data.current_weather) {
-              document.getElementById('temp').innerHTML = Math.round(data.current_weather.temperature) + "°C";
-              document.getElementById('weather-desc').innerHTML = codes[data.current_weather.weathercode] || "CLEAR";
-              document.getElementById('weather-icon').innerHTML = icons[data.current_weather.weathercode] || "☀️";
-              document.getElementById('wind').innerHTML = Math.round(data.current_weather.windspeed) + " km/h";
-            }
-            if (data && data.daily) {
-              document.getElementById('high-low').innerHTML = Math.round(data.daily.temperature_2m_max[0]) + "°/" + Math.round(data.daily.temperature_2m_min[0]) + "°";
-              if (data.daily.sunrise && data.daily.sunrise[0]) {
-                var parts = data.daily.sunrise[0].split("T");
-                if (parts[1]) document.getElementById('sunrise').innerHTML = parts[1];
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 400) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+
+              if (data && data.current_weather) {
+                var temp = Math.round(data.current_weather.temperature);
+                var code = data.current_weather.weathercode;
+                document.getElementById('temp').innerHTML = temp + "°C";
+                document.getElementById('weather-desc').innerHTML = weatherCodes[code] || "CLOUDY";
+                document.getElementById('weather-icon').innerHTML = weatherIcons[code] || "☁️";
+                document.getElementById('wind').innerHTML = Math.round(data.current_weather.windspeed) + " km/h";
               }
-            }
-            if (data && data.hourly) {
-              var curH = new Date().getHours();
-              if (data.hourly.relativehumidity_2m) {
-                document.getElementById('humidity').innerHTML = (data.hourly.relativehumidity_2m[curH] || "--") + "%";
-              }
-              if (data.hourly.precipitation_probability) {
-                var p = data.hourly.precipitation_probability;
-                var r = "NONE";
-                for (var i = curH; i < curH + 24; i++) {
-                  if (p[i] && p[i] > 30) {
-                    var hr = i % 24;
-                    r = (hr < 10 ? "0" + hr : "" + hr) + ":00";
-                    break;
-                  }
+
+              if (data && data.daily) {
+                if (data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
+                  var high = Math.round(data.daily.temperature_2m_max[0]);
+                  var low = Math.round(data.daily.temperature_2m_min[0]);
+                  document.getElementById('high-low').innerHTML = high + "°/" + low + "°";
                 }
-                document.getElementById('rain-time').innerHTML = r;
+                if (data.daily.sunrise && data.daily.sunrise[0]) {
+                  var parts = data.daily.sunrise[0].split("T");
+                  if (parts[1]) document.getElementById('sunrise').innerHTML = parts[1];
+                }
               }
+
+              var currentHour = new Date().getHours();
+              if (data && data.hourly) {
+                if (data.hourly.relativehumidity_2m) {
+                  var val = data.hourly.relativehumidity_2m[currentHour];
+                  var humText = (val !== undefined && val !== null) ? val : "--";
+                  document.getElementById('humidity').innerHTML = humText + "%";
+                }
+                if (data.hourly.precipitation_probability) {
+                  var probs = data.hourly.precipitation_probability;
+                  var rainHourText = "NONE";
+                  for (var i = currentHour; i < currentHour + 24; i++) {
+                    if (probs[i] && probs[i] > 30) {
+                      var h = i % 24;
+                      rainHourText = (h < 10 ? "0" + h : h) + ":00";
+                      break;
+                    }
+                  }
+                  document.getElementById('rain-time').innerHTML = rainHourText;
+                }
+              }
+            } catch(e) {
+              document.getElementById('weather-desc').innerHTML = "UNAVAILABLE";
             }
-          } catch(e) {}
+          } else {
+            document.getElementById('weather-desc').innerHTML = "OFFLINE";
+          }
         }
       };
       xhr.send();
     }
 
-    fetchLocalWeather();
-    setInterval(fetchLocalWeather, 300000);
+    fetchWeather();
+    setInterval(fetchWeather, 900000);
 
     var audio = document.getElementById('silent-audio');
     var btn = document.getElementById('fs-btn');
-    function lockDisplay() {
+
+    function activateKeepAlive() {
       if (audio) {
         audio.play();
-        if (btn) { btn.innerHTML = "🟢 DISPLAY LOCKED"; btn.className = "fullscreen-btn active"; }
+        if (btn) {
+          btn.innerHTML = "🟢 DISPLAY LOCKED (ACTIVE)";
+          btn.className = "fullscreen-btn active";
+        }
+      }
+
+      var docEl = document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) { docEl.requestFullscreen(); }
+        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); }
       }
     }
-    if (btn) btn.onclick = lockDisplay;
-    document.body.onclick = lockDisplay;
+
+    if (btn) {
+      btn.onclick = function(e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        activateKeepAlive();
+      };
+    }
+
+    document.body.onclick = function() {
+      activateKeepAlive();
+    };
   </script>
 </body>
 </html>
