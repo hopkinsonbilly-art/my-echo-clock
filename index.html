@@ -241,7 +241,6 @@
       var dt = document.getElementById('date');
       if (dt) { dt.innerHTML = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()]; }
 
-      // Day mode: 06:00 to 18:59, Night mode: 19:00 to 05:59
       var isDay = h >= 6 && h < 19;
       var imgName = isDay ? "day.jpg" : "night.jpg";
       document.body.style.backgroundImage = "url('./" + imgName + "')";
@@ -253,7 +252,8 @@
     var wIcons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var wCodes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    function parseWeatherData(res) {
+    // JSONP callback function
+    window.handleWeatherResponse = function(res) {
       if (!res) return;
       
       if (res.current_weather) {
@@ -300,34 +300,18 @@
           rt.innerHTML = r;
         }
       }
-    }
+    };
 
     function fetchWeather() {
-      var rawUrl = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
-      var proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(rawUrl);
+      var oldTag = document.getElementById('weather-jsonp');
+      if (oldTag) {
+        oldTag.parentNode.removeChild(oldTag);
+      }
 
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", proxyUrl, true);
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-          if (xhr.status >= 200 && xhr.status < 400) {
-            try {
-              parseWeatherData(JSON.parse(xhr.responseText));
-            } catch(e) {}
-          } else {
-            // Direct fallback attempt if proxy fails
-            var xhr2 = new XMLHttpRequest();
-            xhr2.open("GET", rawUrl, true);
-            xhr2.onreadystatechange = function() {
-              if (xhr2.readyState === 4 && xhr2.status >= 200 && xhr2.status < 400) {
-                try { parseWeatherData(JSON.parse(xhr2.responseText)); } catch(e) {}
-              }
-            };
-            xhr2.send();
-          }
-        }
-      };
-      xhr.send();
+      var script = document.createElement('script');
+      script.id = 'weather-jsonp';
+      script.src = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon&jsonp=handleWeatherResponse";
+      document.body.appendChild(script);
     }
 
     fetchWeather();
