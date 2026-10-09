@@ -197,7 +197,7 @@
       <div class="weather-icon" id="weather-icon">☀️</div>
       <div class="temp-group">
         <div class="current-temp" id="temp">--°C</div>
-        <div class="weather-desc" id="weather-desc">LOADING...</div>
+        <div class="weather-desc" id="weather-desc">LOADING</div>
       </div>
     </div>
 
@@ -298,29 +298,26 @@
       }
     }
 
+    // Dynamic iframe worker bypass for strict Silk MyPage webview containers
     function fetchWeather() {
-      var rawUrl = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
-      var proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rawUrl);
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
 
-      fetch(proxyUrl)
-        .then(function(response) {
-          if (response.ok) return response.json();
-          throw new Error('Network response was not ok.');
-        })
-        .then(function(data) {
-          if (data && data.contents) {
-            parseWeatherData(JSON.parse(data.contents));
-          }
-        })
-        .catch(function() {
-          // Direct fallback attempt if allorigins proxy fails
-          fetch(rawUrl)
-            .then(function(res) { return res.json(); })
-            .then(function(data) { parseWeatherData(data); })
-            .catch(function() {
-              document.getElementById('weather-desc').innerHTML = "UNAVAILABLE";
-            });
-        });
+      var url = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+
+      var doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write('<script>var xhr = new XMLHttpRequest(); xhr.open("GET", "' + url + '", true); xhr.onreadystatechange = function() { if (xhr.readyState === 4 && xhr.status === 200) { window.parent.postMessage(xhr.responseText, "*"); } }; xhr.send();<\/script>');
+      doc.close();
+
+      window.addEventListener('message', function(event) {
+        try {
+          var data = JSON.parse(event.data);
+          parseWeatherData(data);
+          if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        } catch(e) {}
+      }, { once: true });
     }
 
     fetchWeather();
