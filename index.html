@@ -10,9 +10,8 @@
       margin: 0;
       padding: 0;
     }
+    
     html, body {
-      background: #0f172a;
-      background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%);
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh; 
@@ -24,6 +23,17 @@
       overflow: hidden;
       padding: 10px 16px;
       position: relative;
+    }
+
+    /* Day / Night Gradient Background Classes */
+    body.day-bg {
+      background: #1e3a8a !important;
+      background: radial-gradient(circle at center, #1d4ed8 0%, #0f172a 100%) !important;
+    }
+
+    body.night-bg {
+      background: #020617 !important;
+      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%) !important;
     }
 
     .header-bar {
@@ -90,9 +100,9 @@
     .weather-bar {
       width: 98%;
       max-width: 1100px;
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.85);
       border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       padding: 10px 20px;
       display: flex;
       justify-content: space-between;
@@ -160,7 +170,7 @@
     }
   </style>
 </head>
-<body>
+<body class="night-bg">
 
   <div class="header-bar">
     <div class="location-badge">
@@ -231,9 +241,7 @@
       if (dt) { dt.innerHTML = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()]; }
 
       var isDay = h >= 6 && h < 20;
-      document.body.style.background = isDay 
-        ? "radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%)" 
-        : "radial-gradient(circle at center, #090d16 0%, #020617 100%)";
+      document.body.className = isDay ? "day-bg" : "night-bg";
     }
 
     renderTime();
@@ -242,46 +250,47 @@
     var wIcons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var wCodes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    function loadWeather() {
-      var req = new XMLHttpRequest();
-      req.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon", true);
-      req.onreadystatechange = function() {
-        if (req.readyState === 4 && req.status === 200) {
-          try {
-            var res = JSON.parse(req.responseText);
-            if (res && res.current_weather) {
-              document.getElementById('temp').innerHTML = Math.round(res.current_weather.temperature) + "°C";
-              document.getElementById('weather-desc').innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
-              document.getElementById('weather-icon').innerHTML = wIcons[res.current_weather.weathercode] || "☁️";
-              document.getElementById('wind').innerHTML = Math.round(res.current_weather.windspeed) + " km/h";
-            }
-            if (res && res.daily) {
-              document.getElementById('high-low').innerHTML = Math.round(res.daily.temperature_2m_max[0]) + "°/" + Math.round(res.daily.temperature_2m_min[0]) + "°";
-              var s = res.daily.sunrise[0].split("T");
-              if (s[1]) document.getElementById('sunrise').innerHTML = s[1];
-            }
-            if (res && res.hourly) {
-              var hr = new Date().getHours();
-              if (res.hourly.relativehumidity_2m) {
-                document.getElementById('humidity').innerHTML = (res.hourly.relativehumidity_2m[hr] || "--") + "%";
-              }
-              if (res.hourly.precipitation_probability) {
-                var p = res.hourly.precipitation_probability;
-                var r = "NONE";
-                for (var i = hr; i < hr + 24; i++) {
-                  if (p[i] && p[i] > 30) {
-                    var x = i % 24;
-                    r = (x < 10 ? "0" + x : x) + ":00";
-                    break;
-                  }
-                }
-                document.getElementById('rain-time').innerHTML = r;
-              }
-            }
-          } catch(e) {}
+    // JSONP Weather Callback
+    window.onWeatherLoaded = function(res) {
+      if (res && res.current_weather) {
+        document.getElementById('temp').innerHTML = Math.round(res.current_weather.temperature) + "°C";
+        document.getElementById('weather-desc').innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
+        document.getElementById('weather-icon').innerHTML = wIcons[res.current_weather.weathercode] || "☁️";
+        document.getElementById('wind').innerHTML = Math.round(res.current_weather.windspeed) + " km/h";
+      }
+      if (res && res.daily) {
+        document.getElementById('high-low').innerHTML = Math.round(res.daily.temperature_2m_max[0]) + "°/" + Math.round(res.daily.temperature_2m_min[0]) + "°";
+        var s = res.daily.sunrise[0].split("T");
+        if (s[1]) document.getElementById('sunrise').innerHTML = s[1];
+      }
+      if (res && res.hourly) {
+        var hr = new Date().getHours();
+        if (res.hourly.relativehumidity_2m) {
+          document.getElementById('humidity').innerHTML = (res.hourly.relativehumidity_2m[hr] || "--") + "%";
         }
-      };
-      req.send();
+        if (res.hourly.precipitation_probability) {
+          var p = res.hourly.precipitation_probability;
+          var r = "NONE";
+          for (var i = hr; i < hr + 24; i++) {
+            if (p[i] && p[i] > 30) {
+              var x = i % 24;
+              r = (x < 10 ? "0" + x : x) + ":00";
+              break;
+            }
+          }
+          document.getElementById('rain-time').innerHTML = r;
+        }
+      }
+    };
+
+    function loadWeather() {
+      var oldScript = document.getElementById('jsonp-weather');
+      if (oldScript) { oldScript.parentNode.removeChild(oldScript); }
+
+      var script = document.createElement('script');
+      script.id = 'jsonp-weather';
+      script.src = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon&jsonp=onWeatherLoaded";
+      document.body.appendChild(script);
     }
 
     loadWeather();
