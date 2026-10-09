@@ -10,8 +10,11 @@
       margin: 0;
       padding: 0;
     }
-    
     html, body {
+      background-color: #000000;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh; 
@@ -23,17 +26,16 @@
       overflow: hidden;
       padding: 10px 16px;
       position: relative;
+      transition: background-image 1s ease-in-out;
     }
 
-    /* Day / Night Gradient Background Classes */
-    body.day-bg {
-      background: #1e3a8a !important;
-      background: radial-gradient(circle at center, #1d4ed8 0%, #0f172a 100%) !important;
-    }
-
-    body.night-bg {
-      background: #020617 !important;
-      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%) !important;
+    /* Dark Tint Overlay */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1;
     }
 
     .header-bar {
@@ -100,9 +102,9 @@
     .weather-bar {
       width: 98%;
       max-width: 1100px;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.75);
       border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 10px 20px;
       display: flex;
       justify-content: space-between;
@@ -170,7 +172,7 @@
     }
   </style>
 </head>
-<body class="night-bg">
+<body>
 
   <div class="header-bar">
     <div class="location-badge">
@@ -241,7 +243,8 @@
       if (dt) { dt.innerHTML = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()]; }
 
       var isDay = h >= 6 && h < 20;
-      document.body.className = isDay ? "day-bg" : "night-bg";
+      var bgFile = isDay ? "day.jpg" : "night.jpg";
+      document.body.style.backgroundImage = "url('" + bgFile + "')";
     }
 
     renderTime();
@@ -250,8 +253,7 @@
     var wIcons = {0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌧️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌦️",95:"🌩️"};
     var wCodes = {0:"CLEAR SKY",1:"MAINLY CLEAR",2:"PARTLY CLOUDY",3:"OVERCAST",45:"FOGGY",48:"RIME FOG",51:"LIGHT DRIZZLE",53:"MODERATE DRIZZLE",55:"DENSE DRIZZLE",61:"SLIGHT RAIN",63:"MODERATE RAIN",65:"HEAVY RAIN",71:"SLIGHT SNOW",73:"MODERATE SNOW",75:"HEAVY SNOW",80:"RAIN SHOWERS",95:"THUNDERSTORM"};
 
-    // JSONP Weather Callback
-    window.onWeatherLoaded = function(res) {
+    function parseWeather(res) {
       if (res && res.current_weather) {
         document.getElementById('temp').innerHTML = Math.round(res.current_weather.temperature) + "°C";
         document.getElementById('weather-desc').innerHTML = wCodes[res.current_weather.weathercode] || "CLOUDY";
@@ -281,16 +283,24 @@
           document.getElementById('rain-time').innerHTML = r;
         }
       }
-    };
+    }
 
     function loadWeather() {
-      var oldScript = document.getElementById('jsonp-weather');
-      if (oldScript) { oldScript.parentNode.removeChild(oldScript); }
-
-      var script = document.createElement('script');
-      script.id = 'jsonp-weather';
-      script.src = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon&jsonp=onWeatherLoaded";
-      document.body.appendChild(script);
+      var endpoint = "https://api.open-meteo.com/v1/forecast?latitude=54.9069&longitude=-1.3819&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+      
+      fetch(endpoint)
+        .then(function(response) { return response.json(); })
+        .then(function(data) { parseWeather(data); })
+        .catch(function(err) {
+          var req = new XMLHttpRequest();
+          req.open("GET", endpoint, true);
+          req.onreadystatechange = function() {
+            if (req.readyState === 4 && req.status === 200) {
+              try { parseWeather(JSON.parse(req.responseText)); } catch(e) {}
+            }
+          };
+          req.send();
+        });
     }
 
     loadWeather();
