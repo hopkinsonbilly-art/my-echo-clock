@@ -206,7 +206,7 @@
 
   <!-- Center Container -->
   <div class="center-container">
-    <div class="clock" id="clock">00:00</div>
+    <div class="clock" id="clock">--:--</div>
     <div class="date" id="date">--</div>
   </div>
 
@@ -252,41 +252,37 @@
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    // --- Immediate Clock Update ---
     function updateClock() {
       var now = new Date();
       var hours = now.getHours();
       var minutes = now.getMinutes();
-      if (hours < 10) hours = "0" + hours;
-      if (minutes < 10) minutes = "0" + minutes;
+      if (hours < 10) { hours = "0" + hours; }
+      if (minutes < 10) { minutes = "0" + minutes; }
 
       var clockEl = document.getElementById('clock');
-      if (clockEl) clockEl.innerText = hours + ":" + minutes;
+      if (clockEl) { clockEl.innerHTML = hours + ":" + minutes; }
 
       var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       
       var dateEl = document.getElementById('date');
       if (dateEl) {
-        dateEl.innerText = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+        dateEl.innerHTML = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
       }
 
-      // Background Gradient Fallback
       var isDay = hours >= 6 && hours < 20;
-      document.body.style.backgroundImage = isDay 
+      var bgGradient = isDay 
         ? "linear-gradient(135deg, #1e3a8a, #0f172a), url('day.jpg')" 
         : "linear-gradient(135deg, #020617, #0f172a), url('night.jpg')";
+      document.body.style.backgroundImage = bgGradient;
     }
 
-    // Run clock immediately without waiting for DOM events
     updateClock();
     setInterval(updateClock, 1000);
 
-    // --- Weather Codes & Icons ---
     var weatherIcons = { 0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️", 55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️", 71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️", 95: "🌩️" };
     var weatherCodes = { 0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST", 45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE", 55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN", 71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS", 95: "THUNDERSTORM" };
 
-    // --- Fetch Weather Function with Fallback ---
     function fetchWeather() {
       var LAT = 54.9069;
       var LON = -1.3819;
@@ -294,58 +290,60 @@
 
       var xhr = new XMLHttpRequest();
       xhr.open("GET", url, true);
-      xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 400) {
-          try {
-            var data = JSON.parse(xhr.responseText);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 400) {
+            try {
+              var data = JSON.parse(xhr.responseText);
 
-            if (data && data.current_weather) {
-              var temp = Math.round(data.current_weather.temperature);
-              var code = data.current_weather.weathercode;
-              document.getElementById('temp').innerText = temp + "°C";
-              document.getElementById('weather-desc').innerText = weatherCodes[code] || "CLOUDY";
-              document.getElementById('weather-icon').innerText = weatherIcons[code] || "☁️";
-              document.getElementById('wind').innerText = Math.round(data.current_weather.windspeed) + " km/h";
-            }
+              if (data && data.current_weather) {
+                var temp = Math.round(data.current_weather.temperature);
+                var code = data.current_weather.weathercode;
+                document.getElementById('temp').innerHTML = temp + "°C";
+                document.getElementById('weather-desc').innerHTML = weatherCodes[code] || "CLOUDY";
+                document.getElementById('weather-icon').innerHTML = weatherIcons[code] || "☁️";
+                document.getElementById('wind').innerHTML = Math.round(data.current_weather.windspeed) + " km/h";
+              }
 
-            if (data && data.daily) {
-              if (data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
-                var high = Math.round(data.daily.temperature_2m_max[0]);
-                var low = Math.round(data.daily.temperature_2m_min[0]);
-                document.getElementById('high-low').innerText = high + "°/" + low + "°";
-              }
-              if (data.daily.sunrise && data.daily.sunrise[0]) {
-                var parts = data.daily.sunrise[0].split("T");
-                if (parts[1]) document.getElementById('sunrise').innerText = parts[1];
-              }
-            }
-
-            var currentHour = new Date().getHours();
-            if (data && data.hourly) {
-              if (data.hourly.relativehumidity_2m) {
-                var val = data.hourly.relativehumidity_2m[currentHour];
-                document.getElementById('humidity').innerText = (val !== undefined ? val : "--") + "%";
-              }
-              if (data.hourly.precipitation_probability) {
-                var probs = data.hourly.precipitation_probability;
-                var rainHourText = "NONE";
-                for (var i = currentHour; i < currentHour + 24; i++) {
-                  if (probs[i] && probs[i] > 30) {
-                    var h = i % 24;
-                    rainHourText = (h < 10 ? "0" + h : h) + ":00";
-                    break;
-                  }
+              if (data && data.daily) {
+                if (data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
+                  var high = Math.round(data.daily.temperature_2m_max[0]);
+                  var low = Math.round(data.daily.temperature_2m_min[0]);
+                  document.getElementById('high-low').innerHTML = high + "°/" + low + "°";
                 }
-                document.getElementById('rain-time').innerText = rainHourText;
+                if (data.daily.sunrise && data.daily.sunrise[0]) {
+                  var parts = data.daily.sunrise[0].split("T");
+                  if (parts[1]) document.getElementById('sunrise').innerHTML = parts[1];
+                }
               }
+
+              var currentHour = new Date().getHours();
+              if (data && data.hourly) {
+                if (data.hourly.relativehumidity_2m) {
+                  var val = data.hourly.relativehumidity_2m[currentHour];
+                  var humText = (val !== undefined && val !== null) ? val : "--";
+                  document.getElementById('humidity').innerHTML = humText + "%";
+                }
+                if (data.hourly.precipitation_probability) {
+                  var probs = data.hourly.precipitation_probability;
+                  var rainHourText = "NONE";
+                  for (var i = currentHour; i < currentHour + 24; i++) {
+                    if (probs[i] && probs[i] > 30) {
+                      var h = i % 24;
+                      rainHourText = (h < 10 ? "0" + h : h) + ":00";
+                      break;
+                    }
+                  }
+                  document.getElementById('rain-time').innerHTML = rainHourText;
+                }
+              }
+            } catch(e) {
+              document.getElementById('weather-desc').innerHTML = "UNAVAILABLE";
             }
-          } catch(e) {
-            document.getElementById('weather-desc').innerText = "UNAVAILABLE";
+          } else {
+            document.getElementById('weather-desc').innerHTML = "OFFLINE";
           }
         }
-      };
-      xhr.onerror = function() {
-        document.getElementById('weather-desc').innerText = "OFFLINE";
       };
       xhr.send();
     }
@@ -353,16 +351,35 @@
     fetchWeather();
     setInterval(fetchWeather, 900000);
 
-    // --- Audio Keep-Alive & Fullscreen Controller ---
     var audio = document.getElementById('silent-audio');
     var btn = document.getElementById('fs-btn');
 
     function activateKeepAlive() {
       if (audio) {
-        audio.play().then(function() {
-          if (btn) {
-            btn.innerText = "🟢 DISPLAY LOCKED (ACTIVE)";
-            btn.classList.add('active');
-          }
-        }).catch(function() {
-          if (btn) btn.innerText =
+        audio.play();
+        if (btn) {
+          btn.innerHTML = "🟢 DISPLAY LOCKED (ACTIVE)";
+          btn.className = "fullscreen-btn active";
+        }
+      }
+
+      var docEl = document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) { docEl.requestFullscreen(); }
+        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); }
+      }
+    }
+
+    if (btn) {
+      btn.onclick = function(e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        activateKeepAlive();
+      };
+    }
+
+    document.body.onclick = function() {
+      activateKeepAlive();
+    };
+  </script>
+</body>
+</html>
