@@ -11,7 +11,7 @@
       padding: 0;
     }
     html, body {
-      background-color: #0f172a;
+      background-color: #000000;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -174,6 +174,9 @@
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
       margin-bottom: 2px;
     }
 
@@ -187,7 +190,6 @@
 </head>
 <body>
 
-  <!-- Header Bar -->
   <div class="header-bar">
     <div class="location-badge">
       <div class="green-dot"></div>
@@ -196,13 +198,11 @@
     <button class="fullscreen-btn" id="fs-btn">🔴 TAP TO LOCK DISPLAY</button>
   </div>
 
-  <!-- Center Container -->
   <div class="center-container">
     <div class="clock" id="clock">--:--</div>
-    <div class="date" id="date">--</div>
+    <div class="date" id="date">Loading date...</div>
   </div>
 
-  <!-- Bottom Weather Widget -->
   <div class="weather-bar">
     <div class="weather-left">
       <div class="weather-icon" id="weather-icon">☀️</div>
@@ -240,136 +240,135 @@
     </div>
   </div>
 
-  <!-- Embedded Base64 Silent Audio Stream -->
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    function updateClock() {
-      var now = new Date();
-      var hours = now.getHours();
-      var minutes = now.getMinutes();
-      if (hours < 10) { hours = "0" + hours; }
-      if (minutes < 10) { minutes = "0" + minutes; }
+    const dayBg = "day.jpg";
+    const nightBg = "night.jpg";
 
-      var clockEl = document.getElementById('clock');
-      if (clockEl) { clockEl.innerHTML = hours + ":" + minutes; }
-
-      var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    function updateBackground() {
+      const hour = new Date().getHours();
+      const isDay = hour >= 6 && hour < 20;
+      const targetBg = isDay ? dayBg : nightBg;
       
-      var dateEl = document.getElementById('date');
-      if (dateEl) {
-        dateEl.innerHTML = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
-      }
-
-      var isDay = hours >= 6 && hours < 19;
-      var bgImg = isDay ? "day.jpg" : "night.jpg";
-      document.body.style.backgroundImage = "url('" + bgImg + "')";
+      document.body.style.backgroundImage = `url('${targetBg}')`;
     }
 
-    updateClock();
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}`;
+
+      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
+
+      updateBackground();
+    }
     setInterval(updateClock, 1000);
+    updateClock();
 
-    var weatherIcons = { 0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️", 55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️", 71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️", 95: "🌩️" };
-    var weatherCodes = { 0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST", 45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE", 55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN", 71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS", 95: "THUNDERSTORM" };
+    const LAT = 54.9069;
+    const LON = -1.3819;
 
-    function fetchWeather() {
-      var LAT = 54.9069;
-      var LON = -1.3819;
-      var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon";
+    const weatherIcons = {
+      0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+      45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️",
+      55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
+      71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️",
+      95: "🌩️"
+    };
 
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", url, true);
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-          if (xhr.status >= 200 && xhr.status < 400) {
-            try {
-              var data = JSON.parse(xhr.responseText);
+    const weatherCodes = {
+      0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST",
+      45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE",
+      55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN",
+      71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS",
+      95: "THUNDERSTORM"
+    };
 
-              if (data && data.current_weather) {
-                var temp = Math.round(data.current_weather.temperature);
-                var code = data.current_weather.weathercode;
-                document.getElementById('temp').innerHTML = temp + "°C";
-                document.getElementById('weather-desc').innerHTML = weatherCodes[code] || "CLOUDY";
-                document.getElementById('weather-icon').innerHTML = weatherIcons[code] || "☁️";
-                document.getElementById('wind').innerHTML = Math.round(data.current_weather.windspeed) + " km/h";
-              }
+    async function fetchWeather() {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Weather network error");
+        const data = await response.json();
 
-              if (data && data.daily) {
-                if (data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
-                  var high = Math.round(data.daily.temperature_2m_max[0]);
-                  var low = Math.round(data.daily.temperature_2m_min[0]);
-                  document.getElementById('high-low').innerHTML = high + "°/" + low + "°";
-                }
-                if (data.daily.sunrise && data.daily.sunrise[0]) {
-                  var parts = data.daily.sunrise[0].split("T");
-                  if (parts[1]) document.getElementById('sunrise').innerHTML = parts[1];
-                }
-              }
+        if (data.current_weather) {
+          const temp = Math.round(data.current_weather.temperature);
+          const code = data.current_weather.weathercode;
+          document.getElementById('temp').textContent = `${temp}°C`;
+          document.getElementById('weather-desc').textContent = weatherCodes[code] || "CLOUDY";
+          document.getElementById('weather-icon').textContent = weatherIcons[code] || "☁️";
 
-              var currentHour = new Date().getHours();
-              if (data && data.hourly) {
-                if (data.hourly.relativehumidity_2m) {
-                  var val = data.hourly.relativehumidity_2m[currentHour];
-                  var humText = (val !== undefined && val !== null) ? val : "--";
-                  document.getElementById('humidity').innerHTML = humText + "%";
-                }
-                if (data.hourly.precipitation_probability) {
-                  var probs = data.hourly.precipitation_probability;
-                  var rainHourText = "NONE";
-                  for (var i = currentHour; i < currentHour + 24; i++) {
-                    if (probs[i] && probs[i] > 30) {
-                      var h = i % 24;
-                      rainHourText = (h < 10 ? "0" + h : h) + ":00";
-                      break;
-                    }
-                  }
-                  document.getElementById('rain-time').innerHTML = rainHourText;
-                }
-              }
-            } catch(e) {
-              document.getElementById('weather-desc').innerHTML = "UNAVAILABLE";
-            }
-          } else {
-            document.getElementById('weather-desc').innerHTML = "OFFLINE";
-          }
+          const wind = Math.round(data.current_weather.windspeed);
+          document.getElementById('wind').textContent = `${wind} km/h`;
         }
-      };
-      xhr.send();
-    }
 
+        if (data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
+          const high = Math.round(data.daily.temperature_2m_max[0]);
+          const low = Math.round(data.daily.temperature_2m_min[0]);
+          document.getElementById('high-low').textContent = `${high}°/${low}°`;
+        }
+
+        if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
+          const sunriseTime = data.daily.sunrise[0].split("T")[1];
+          document.getElementById('sunrise').textContent = sunriseTime;
+        }
+
+        const currentHour = new Date().getHours();
+        if (data.hourly && data.hourly.relativehumidity_2m) {
+          const humidity = data.hourly.relativehumidity_2m[currentHour] ?? data.hourly.relativehumidity_2m[0] ?? "--";
+          document.getElementById('humidity').textContent = `${humidity}%`;
+        }
+
+        if (data.hourly && data.hourly.precipitation_probability) {
+          const precipProbs = data.hourly.precipitation_probability;
+          let rainHourText = "NONE";
+          for (let i = currentHour; i < currentHour + 24; i++) {
+            if (precipProbs[i] > 30) {
+              const h = i % 24;
+              rainHourText = `${String(h).padStart(2, '0')}:00`;
+              break;
+            }
+          }
+          document.getElementById('rain-time').textContent = rainHourText;
+        }
+
+      } catch (err) {
+        console.error("Weather fetch failed:", err);
+        document.getElementById('weather-desc').textContent = "UNAVAILABLE";
+      }
+    }
     fetchWeather();
     setInterval(fetchWeather, 900000);
 
-    var audio = document.getElementById('silent-audio');
-    var btn = document.getElementById('fs-btn');
+    const audio = document.getElementById('silent-audio');
+    const btn = document.getElementById('fs-btn');
 
     function activateKeepAlive() {
-      if (audio) {
-        audio.play();
-        if (btn) {
-          btn.innerHTML = "🟢 DISPLAY LOCKED (ACTIVE)";
-          btn.className = "fullscreen-btn active";
-        }
-      }
+      audio.play().then(() => {
+        btn.textContent = "🟢 DISPLAY LOCKED (ACTIVE)";
+        btn.classList.add('active');
+      }).catch((err) => {
+        btn.textContent = "⚠️ TAP AGAIN TO LOCK";
+      });
 
-      var docEl = document.documentElement;
+      const docEl = document.documentElement;
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (docEl.requestFullscreen) { docEl.requestFullscreen(); }
-        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); }
+        if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
       }
     }
 
-    if (btn) {
-      btn.onclick = function(e) {
-        if (e && e.stopPropagation) { e.stopPropagation(); }
-        activateKeepAlive();
-      };
-    }
-
-    document.body.onclick = function() {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       activateKeepAlive();
-    };
+    });
+
+    document.body.addEventListener('click', () => {
+      activateKeepAlive();
+    }, { once: true });
   </script>
 </body>
 </html>
