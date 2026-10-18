@@ -12,9 +12,6 @@
     }
     html, body {
       background-color: #000000;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh; 
@@ -26,9 +23,21 @@
       overflow: hidden;
       padding: 10px 16px;
       position: relative;
-      transition: background-image 1s ease-in-out;
     }
 
+    /* Video Background Styling */
+    .bg-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Dark Overlay for Text Readability */
     body::before {
       content: '';
       position: absolute;
@@ -190,6 +199,9 @@
 </head>
 <body>
 
+  <!-- Background Video Element -->
+  <video id="bg-video" class="bg-video" autoplay loop muted playsinline></video>
+
   <div class="header-bar">
     <div class="location-badge">
       <div class="green-dot"></div>
@@ -243,15 +255,20 @@
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    const dayBg = "day.jpg";
-    const nightBg = "night.jpg";
+    const dayVideo = "day.mp4";
+    const nightVideo = "night.mp4";
 
     function updateBackground() {
       const hour = new Date().getHours();
       const isDay = hour >= 6 && hour < 20;
-      const targetBg = isDay ? dayBg : nightBg;
+      const targetVideo = isDay ? dayVideo : nightVideo;
       
-      document.body.style.backgroundImage = `url('${targetBg}')`;
+      const videoEl = document.getElementById('bg-video');
+      // Only swap video source if it actually changes to prevent reload stutters
+      if (!videoEl.src.includes(targetVideo)) {
+        videoEl.src = targetVideo;
+        videoEl.play().catch((err) => console.log("Autoplay check:", err));
+      }
     }
 
     function updateClock() {
@@ -341,7 +358,7 @@
       }
     }
     fetchWeather();
-    setInterval(fetchWeather, 900000); // Refreshes every 15 minutes
+    setInterval(fetchWeather, 900000); // 15-minute fetch loop
 
     const audio = document.getElementById('silent-audio');
     const btn = document.getElementById('fs-btn');
