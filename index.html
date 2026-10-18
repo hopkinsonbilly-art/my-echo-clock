@@ -11,7 +11,7 @@
       padding: 0;
     }
     html, body {
-      background-color: #000000;
+      background-color: #0f172a; /* Fallback dark background */
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh; 
@@ -140,4 +140,256 @@
 
     .weather-icon {
       font-size: 3.2vw;
-      line
+      line-height: 1;
+    }
+
+    .temp-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .current-temp {
+      font-size: 3.2vw;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .weather-desc {
+      font-size: 1.2vw;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    .weather-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .stat-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .stat-label {
+      font-size: 1.1vw;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 2vw;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <video id="bg-video" class="bg-video" autoplay loop muted playsinline></video>
+
+  <div class="header-bar">
+    <div class="location-badge">
+      <div class="green-dot"></div>
+      SUNDERLAND
+    </div>
+    <button class="fullscreen-btn" id="fs-btn">🔴 TAP TO LOCK DISPLAY</button>
+  </div>
+
+  <div class="center-container">
+    <div class="clock" id="clock">--:--</div>
+    <div class="date" id="date">Loading date...</div>
+  </div>
+
+  <div class="weather-bar">
+    <div class="weather-left">
+      <div class="weather-icon" id="weather-icon">☀️</div>
+      <div class="temp-group">
+        <div class="current-temp" id="temp">--°C</div>
+        <div class="weather-desc" id="weather-desc">LOADING</div>
+      </div>
+    </div>
+
+    <div class="weather-right">
+      <div class="stat-box">
+        <div class="stat-label">☔ RAIN AT</div>
+        <div class="stat-value" id="rain-time">--:--</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">HIGH / LOW</div>
+        <div class="stat-value" id="high-low">--°/--°</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">HUMIDITY</div>
+        <div class="stat-value" id="humidity">--%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">WIND</div>
+        <div class="stat-value" id="wind">-- km/h</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">☀️ SUNRISE</div>
+        <div class="stat-value" id="sunrise">--:--</div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
+
+  <script>
+    const dayVideo = "day.mp4";
+    const nightVideo = "night.mp4";
+
+    const videoEl = document.getElementById('bg-video');
+
+    // Video error listener fallback
+    videoEl.onerror = function() {
+      console.warn("Video failed to load or play. Falling back to dark styled background.");
+      videoEl.style.display = 'none';
+      document.body.style.backgroundImage = "url('day.jpg')";
+    };
+
+    function updateBackground() {
+      const hour = new Date().getHours();
+      const isDay = hour >= 6 && hour < 20;
+      const targetVideo = isDay ? dayVideo : nightVideo;
+      
+      if (!videoEl.src.includes(targetVideo)) {
+        videoEl.src = targetVideo;
+        videoEl.play().catch((err) => console.log("Autoplay blocked/failed:", err));
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${hours}:${minutes}`;
+
+      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
+
+      updateBackground();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const LAT = 54.9069;
+    const LON = -1.3819;
+
+    const weatherIcons = {
+      0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+      45: "🌫️", 48: "🌫️", 51: "🌧️", 53: "🌧️",
+      55: "🌧️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
+      71: "❄️", 73: "❄️", 75: "❄️", 80: "🌦️",
+      95: "🌩️"
+    };
+
+    const weatherCodes = {
+      0: "CLEAR SKY", 1: "MAINLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST",
+      45: "FOGGY", 48: "RIME FOG", 51: "LIGHT DRIZZLE", 53: "MODERATE DRIZZLE",
+      55: "DENSE DRIZZLE", 61: "SLIGHT RAIN", 63: "MODERATE RAIN", 65: "HEAVY RAIN",
+      71: "SLIGHT SNOW", 73: "MODERATE SNOW", 75: "HEAVY SNOW", 80: "RAIN SHOWERS",
+      95: "THUNDERSTORM"
+    };
+
+    async function fetchWeather() {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=precipitation_probability,relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,sunrise&timezone=Europe%2FLondon`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Weather network error");
+        const data = await response.json();
+
+        if (data.current_weather) {
+          const temp = Math.round(data.current_weather.temperature);
+          const code = data.current_weather.weathercode;
+          document.getElementById('temp').textContent = `${temp}°C`;
+          document.getElementById('weather-desc').textContent = weatherCodes[code] || "CLOUDY";
+          document.getElementById('weather-icon').textContent = weatherIcons[code] || "☁️";
+
+          const wind = Math.round(data.current_weather.windspeed);
+          document.getElementById('wind').textContent = `${wind} km/h`;
+        }
+
+        if (data.daily && data.daily.temperature_2m_max && data.daily.temperature_2m_min) {
+          const high = Math.round(data.daily.temperature_2m_max[0]);
+          const low = Math.round(data.daily.temperature_2m_min[0]);
+          document.getElementById('high-low').textContent = `${high}°/${low}°`;
+        }
+
+        if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
+          const sunriseTime = data.daily.sunrise[0].split("T")[1];
+          document.getElementById('sunrise').textContent = sunriseTime;
+        }
+
+        const currentHour = new Date().getHours();
+        if (data.hourly && data.hourly.relativehumidity_2m) {
+          const humidity = data.hourly.relativehumidity_2m[currentHour] ?? data.hourly.relativehumidity_2m[0] ?? "--";
+          document.getElementById('humidity').textContent = `${humidity}%`;
+        }
+
+        if (data.hourly && data.hourly.precipitation_probability) {
+          const precipProbs = data.hourly.precipitation_probability;
+          let rainHourText = "NONE";
+          for (let i = currentHour; i < currentHour + 24; i++) {
+            if (precipProbs[i] > 30) {
+              const h = i % 24;
+              rainHourText = `${String(h).padStart(2, '0')}:00`;
+              break;
+            }
+          }
+          document.getElementById('rain-time').textContent = rainHourText;
+        }
+
+      } catch (err) {
+        console.error("Weather fetch failed:", err);
+        document.getElementById('weather-desc').textContent = "UNAVAILABLE";
+      }
+    }
+    fetchWeather();
+    setInterval(fetchWeather, 900000);
+
+    const audio = document.getElementById('silent-audio');
+    const btn = document.getElementById('fs-btn');
+
+    function activateKeepAlive() {
+      audio.play().then(() => {
+        btn.textContent = "🟢 DISPLAY LOCKED (ACTIVE)";
+        btn.classList.add('active');
+      }).catch((err) => {
+        btn.textContent = "⚠️ TAP AGAIN TO LOCK";
+      });
+
+      const docEl = document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
+      }
+    }
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      activateKeepAlive();
+    });
+
+    document.body.addEventListener('click', () => {
+      activateKeepAlive();
+    }, { once: true });
+  </script>
+</body>
+</html>
