@@ -25,6 +25,7 @@
       position: relative;
     }
 
+    /* Dual Video Elements Stacked Behind Content */
     .bg-video {
       position: absolute;
       top: 0;
@@ -34,6 +35,12 @@
       object-fit: cover;
       z-index: 0;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+    }
+
+    .bg-video.active {
+      opacity: 1;
     }
 
     body::before {
@@ -197,7 +204,9 @@
 </head>
 <body>
 
-  <video id="bg-video" class="bg-video" autoplay loop muted playsinline></video>
+  <!-- Preloaded Video Players -->
+  <video id="video-day" class="bg-video active" src="day.mp4" autoplay loop muted playsinline></video>
+  <video id="video-night" class="bg-video" src="night.mp4" autoplay loop muted playsinline></video>
 
   <div class="header-bar">
     <div class="location-badge">
@@ -252,34 +261,25 @@
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    const dayVideo = "day.mp4";
-    const nightVideo = "night.mp4";
-    let currentVideoFile = "";
+    const dayVideoEl = document.getElementById('video-day');
+    const nightVideoEl = document.getElementById('video-night');
 
-    // Default minutes from midnight (07:00 and 18:00)
+    // Default cutoff threshold (07:00 to 18:00)
     let sunriseMinutes = 420;
     let sunsetMinutes = 1080;
-
-    const videoEl = document.getElementById('bg-video');
-
-    videoEl.onerror = function() {
-      console.warn("Video playback error in Silk. Falling back to day.jpg");
-      videoEl.style.display = 'none';
-      document.body.style.backgroundImage = "url('day.jpg')";
-    };
 
     function updateBackground() {
       const now = new Date();
       const currentMinutes = (now.getHours() * 60) + now.getMinutes();
       
       const isDay = currentMinutes >= sunriseMinutes && currentMinutes < sunsetMinutes;
-      const targetVideo = isDay ? dayVideo : nightVideo;
       
-      if (currentVideoFile !== targetVideo) {
-        currentVideoFile = targetVideo;
-        videoEl.src = targetVideo;
-        videoEl.load();
-        videoEl.play().catch((err) => console.log("Autoplay check:", err));
+      if (isDay) {
+        dayVideoEl.classList.add('active');
+        nightVideoEl.classList.remove('active');
+      } else {
+        nightVideoEl.classList.add('active');
+        dayVideoEl.classList.remove('active');
       }
     }
 
@@ -291,6 +291,8 @@
 
       const options = { weekday: 'long', day: 'numeric', month: 'long' };
       document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
+
+      updateBackground();
     }
 
     setInterval(updateClock, 1000);
@@ -322,7 +324,6 @@
         if (!response.ok) throw new Error("Weather network error");
         const data = await response.json();
 
-        // 1. Render all weather text DOM elements FIRST
         if (data.current_weather) {
           const temp = Math.round(data.current_weather.temperature);
           const code = data.current_weather.weathercode;
@@ -359,7 +360,6 @@
           document.getElementById('rain-time').textContent = rainHourText;
         }
 
-        // 2. Parse astronomical times
         if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
           const sunriseStr = data.daily.sunrise[0].split("T")[1];
           document.getElementById('sunrise').textContent = sunriseStr;
@@ -373,7 +373,6 @@
           sunsetMinutes = (ssH * 60) + ssM;
         }
 
-        // 3. Update background safely AFTER DOM rendering complete
         updateBackground();
 
       } catch (err) {
@@ -384,7 +383,6 @@
 
     fetchWeather();
     setInterval(fetchWeather, 900000);
-    setInterval(updateBackground, 300000);
 
     const audio = document.getElementById('silent-audio');
     const btn = document.getElementById('fs-btn');
