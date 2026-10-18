@@ -243,8 +243,6 @@
   <audio id="silent-audio" loop playsinline src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
 
   <script>
-    const dayBg = "day.jpg";
-    const nightBg = "night.jpg";
     let activeBgFile = "";
 
     // Default daylight thresholds in minutes from midnight (07:00 and 18:00)
@@ -256,11 +254,12 @@
       const currentMinutes = (now.getHours() * 60) + now.getMinutes();
       
       const isDay = currentMinutes >= sunriseMinutes && currentMinutes < sunsetMinutes;
-      const targetBg = isDay ? dayBg : nightBg;
+      const targetBg = isDay ? "day.jpg" : "night.jpg";
       
       if (activeBgFile !== targetBg) {
         activeBgFile = targetBg;
-        document.body.style.backgroundImage = `url('${targetBg}?v=${Date.now()}')`;
+        // Clean CSS URL assignment without inline query string breaking Silk
+        document.body.style.backgroundImage = 'url("' + targetBg + '")';
       }
     }
 
@@ -268,7 +267,7 @@
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clock').textContent = `${hours}:${minutes}`;
+      document.getElementById('clock').textContent = hours + ':' + minutes;
 
       const options = { weekday: 'long', day: 'numeric', month: 'long' };
       document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
