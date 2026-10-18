@@ -11,7 +11,7 @@
       padding: 0;
     }
     html, body {
-      background-color: #0f172a; /* Fallback dark background */
+      background-color: #0f172a;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh; 
@@ -254,12 +254,12 @@
   <script>
     const dayVideo = "day.mp4";
     const nightVideo = "night.mp4";
+    let currentVideoFile = "";
 
     const videoEl = document.getElementById('bg-video');
 
-    // Video error listener fallback
     videoEl.onerror = function() {
-      console.warn("Video failed to load or play. Falling back to dark styled background.");
+      console.warn("Video playback error in Silk. Falling back to day.jpg");
       videoEl.style.display = 'none';
       document.body.style.backgroundImage = "url('day.jpg')";
     };
@@ -269,9 +269,12 @@
       const isDay = hour >= 6 && hour < 20;
       const targetVideo = isDay ? dayVideo : nightVideo;
       
-      if (!videoEl.src.includes(targetVideo)) {
+      // Strict check: Only change the video source if the filename actually changes
+      if (currentVideoFile !== targetVideo) {
+        currentVideoFile = targetVideo;
         videoEl.src = targetVideo;
-        videoEl.play().catch((err) => console.log("Autoplay blocked/failed:", err));
+        videoEl.load();
+        videoEl.play().catch((err) => console.log("Autoplay check:", err));
       }
     }
 
@@ -283,9 +286,12 @@
 
       const options = { weekday: 'long', day: 'numeric', month: 'long' };
       document.getElementById('date').textContent = now.toLocaleDateString('en-GB', options);
-
-      updateBackground();
     }
+
+    // Run background check on load and then once every 5 minutes instead of every 1 second
+    updateBackground();
+    setInterval(updateBackground, 300000);
+
     setInterval(updateClock, 1000);
     updateClock();
 
